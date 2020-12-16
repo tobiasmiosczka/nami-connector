@@ -32,7 +32,9 @@ public class JsonUtil {
                             return null;
                         }
                         try {
-                            return LocalDateTime.from(DATE_TIME_FORMATTER.parse(string));
+                            synchronized (DATE_TIME_FORMATTER) {
+                                return LocalDateTime.from(DATE_TIME_FORMATTER.parse(string));
+                            }
                         } catch (DateTimeParseException e) {
                             e.printStackTrace();
                             return null;
@@ -45,7 +47,9 @@ public class JsonUtil {
                         if(string == null || string.equals(""))
                             return null;
                         try {
-                            return LocalDate.from(DATE_FORMATTER.parse(string));
+                            synchronized (DATE_FORMATTER) {
+                                return LocalDate.from(DATE_FORMATTER.parse(string));
+                            }
                         } catch (DateTimeParseException e) {
                             e.printStackTrace();
                             return null;
