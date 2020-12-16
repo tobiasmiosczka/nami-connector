@@ -67,7 +67,7 @@ public class UriBuilder {
         }
     }
 
-    protected URI build() {
+    public URI build() {
         StringBuilder stringBuilder = new StringBuilder()
                 .append(scheme)
                 .append("://")
@@ -81,6 +81,4 @@ public class UriBuilder {
         stringBuilder.append(paramString);
         return URI.create(stringBuilder.toString());
     }
-
-
 }

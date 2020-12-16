@@ -7,7 +7,7 @@
 
     <groupId>com.github.tobiasmiosczka</groupId>
     <artifactId>nami-connector</artifactId>
-    <version>3.29</version>
+    <version>3.31</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
