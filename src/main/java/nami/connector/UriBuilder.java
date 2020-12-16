@@ -1,5 +1,6 @@
 package nami.connector;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -58,7 +59,12 @@ public class UriBuilder {
     }
 
     private static String encode(String s) {
-        return URLEncoder.encode(s, StandardCharsets.UTF_8);
+        try {
+            return URLEncoder.encode(s, StandardCharsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return "";
+        }
     }
 
     protected URI build() {
