@@ -33,6 +33,17 @@ public class UriBuilder {
         this.path = path;
     }
 
+    public UriBuilder appendPath(String pathAppendix) {
+        String path = getPath();
+        if (path.isEmpty())
+            path = "/";
+        if ((path.charAt(path.length() - 1) != '/') && (pathAppendix.charAt(0) != '/'))
+            setPath(path + "/" + pathAppendix);
+        else
+            setPath(path + pathAppendix);
+        return this;
+    }
+
     public String getHost() {
         return host;
     }
@@ -42,7 +53,7 @@ public class UriBuilder {
     }
 
     public UriBuilder setParameter(String key, String value) {
-        params.put(key, value);
+        params.put(encode(key), encode(value));
         return this;
     }
 
@@ -57,7 +68,7 @@ public class UriBuilder {
                 .append(host)
                 .append(path);
         String paramString = params.entrySet().stream()
-                .map(e -> encode(e.getKey()) + "=" + encode(e.getValue()))
+                .map(e -> e.getKey() + "=" + e.getValue())
                 .reduce((s1, s2) -> s1 + "&" + s2).orElse("");
         if (!paramString.isEmpty())
             paramString = "?" + paramString;

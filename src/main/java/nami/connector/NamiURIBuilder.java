@@ -44,17 +44,6 @@ public class NamiURIBuilder extends UriBuilder {
         appendPath(path);
     }
 
-    public NamiURIBuilder appendPath(String pathAppendix) {
-        String path = getPath();
-        if (path.isEmpty())
-            path = "/";
-        if ((path.charAt(path.length() - 1) != '/') && (pathAppendix.charAt(0) != '/'))
-            setPath(path + "/" + pathAppendix);
-        else
-            setPath(path + pathAppendix);
-        return this;
-    }
-
     public static NamiURIBuilder getLoginURIBuilder(NamiServer server) {
         return new NamiURIBuilder(server, URL_NAMI_STARTUP, false);
     }

@@ -135,11 +135,11 @@ public class NamiConnector {
         return JsonUtil.fromJson(response.body(), type);
     }
 
-    public NamiURIBuilder getURIBuilder(String path) {
+    public UriBuilder getURIBuilder(String path) {
         return getURIBuilder(path, true);
     }
 
-    public NamiURIBuilder getURIBuilder(String path, boolean restUrl) {
+    public UriBuilder getURIBuilder(String path, boolean restUrl) {
         return new NamiURIBuilder(server, path, restUrl);
     }
 
@@ -166,7 +166,7 @@ public class NamiConnector {
     }
 
     public NamiMitglied getMitgliedById(int id) throws IOException, NamiException, InterruptedException {
-        NamiURIBuilder builder = getURIBuilder(NamiURIBuilder.URL_NAMI_MITGLIEDER)
+        UriBuilder builder = getURIBuilder(NamiURIBuilder.URL_NAMI_MITGLIEDER)
                 .appendPath("0")
                 .appendPath(Integer.toString(id));
         NamiResponse<NamiMitglied> resp = executeApiRequest(
@@ -180,7 +180,7 @@ public class NamiConnector {
     }
 
     public Map<NamiBaustein, NamiSchulung> getSchulungen(int mitgliedsID) throws IOException, NamiException, InterruptedException {
-        NamiURIBuilder builder = getURIBuilder(NamiURIBuilder.URL_SCHULUNGEN)
+        UriBuilder builder = getURIBuilder(NamiURIBuilder.URL_SCHULUNGEN)
                 .appendPath(Integer.toString(mitgliedsID))
                 .appendPath("/flist");
         NamiResponse<Collection<NamiSchulung>> response = executeApiRequest(
@@ -191,7 +191,7 @@ public class NamiConnector {
     }
 
     public List<NamiEnum> getTaetigkeiten() throws NamiException, IOException, InterruptedException {
-        NamiURIBuilder builder = getURIBuilder(NamiURIBuilder.URL_TAETIGKEITEN);
+        UriBuilder builder = getURIBuilder(NamiURIBuilder.URL_TAETIGKEITEN);
         NamiResponse<List<NamiEnum>> resp = executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
                 new TypeToken<NamiResponse<List<NamiEnum>>>() {}.getType());
@@ -199,7 +199,7 @@ public class NamiConnector {
     }
 
     public List<NamiEnum> getUntergliederungen() throws NamiException, IOException, InterruptedException {
-        NamiURIBuilder builder = getURIBuilder(NamiURIBuilder.URL_UNTERGLIEDERUNGEN);
+        UriBuilder builder = getURIBuilder(NamiURIBuilder.URL_UNTERGLIEDERUNGEN);
         NamiResponse<List<NamiEnum>> resp = executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
                 new TypeToken<NamiResponse<List<NamiEnum>>>() {}.getType());
@@ -207,7 +207,7 @@ public class NamiConnector {
     }
 
     public Collection<NamiMitglied> getMitgliederFromGruppierung(int gruppierungsnummer) throws NamiException, IOException, InterruptedException {
-        NamiURIBuilder builder = getURIBuilder(NamiURIBuilder.URL_NAMI_MITGLIEDER);
+        UriBuilder builder = getURIBuilder(NamiURIBuilder.URL_NAMI_MITGLIEDER);
         builder.appendPath(Integer.toString(gruppierungsnummer))
                 .appendPath("flist")
                 .setParameter("limit", "5000")
@@ -268,7 +268,7 @@ public class NamiConnector {
     }
 
     private Collection<NamiGruppierung> getGruppierungenFromUser(int id) throws IOException, NamiException, InterruptedException {
-        NamiURIBuilder builder = getURIBuilder(NamiURIBuilder.URL_GRUPPIERUNGEN);
+        UriBuilder builder = getURIBuilder(NamiURIBuilder.URL_GRUPPIERUNGEN);
         if (id != -1)
             builder.appendPath(String.valueOf(id));
         NamiResponse<Collection<NamiGruppierung>> resp = executeApiRequest(
@@ -310,7 +310,7 @@ public class NamiConnector {
     }
 
     public NamiTaetigkeitAssignment getTaetigkeit(int personId, int taetigkeitId) throws IOException, InterruptedException, NamiException {
-        NamiURIBuilder builder = getURIBuilder(NamiURIBuilder.URL_NAMI_TAETIGKEIT)
+        UriBuilder builder = getURIBuilder(NamiURIBuilder.URL_NAMI_TAETIGKEIT)
                 .appendPath(Integer.toString(personId))
                 .appendPath(Integer.toString(taetigkeitId));
         NamiResponse<NamiTaetigkeitAssignment> resp = executeApiRequest(
