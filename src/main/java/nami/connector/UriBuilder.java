@@ -1,6 +1,9 @@
 package nami.connector;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,6 +42,15 @@ public class UriBuilder {
         this.host = host;
     }
 
+    public UriBuilder setParameter(String key, String value) {
+        params.put(key, value);
+        return this;
+    }
+
+    private static String encode(String s) {
+        return URLEncoder.encode(s, StandardCharsets.UTF_8);
+    }
+
     protected URI build() {
         StringBuilder stringBuilder = new StringBuilder()
                 .append(scheme)
@@ -46,7 +58,7 @@ public class UriBuilder {
                 .append(host)
                 .append(path);
         String paramString = params.entrySet().stream()
-                .map(e -> e.getKey() + "=" + e.getValue())
+                .map(e -> encode(e.getKey()) + "=" + encode(e.getValue()))
                 .reduce((s1, s2) -> s1 + "&" + s2).orElse("");
         if (!paramString.isEmpty())
             paramString = "?" + paramString;
@@ -54,8 +66,5 @@ public class UriBuilder {
         return URI.create(stringBuilder.toString());
     }
 
-    public UriBuilder setParameter(String key, String value) {
-        params.put(key, value);
-        return this;
-    }
+
 }

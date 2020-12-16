@@ -1,6 +1,7 @@
 package nami.connector;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.CookieHandler;
 import java.net.CookieManager;
@@ -71,7 +72,7 @@ public class NamiConnector {
         return HttpRequest.BodyPublishers.ofString(builder.toString());
     }
 
-    public void login(String username, String password) throws IOException, NamiLoginException, InterruptedException {
+    public void login(String username, String password) throws IOException, NamiLoginException, InterruptedException, UnsupportedEncodingException {
         if (isAuthenticated)
             return;
         this.username = username;

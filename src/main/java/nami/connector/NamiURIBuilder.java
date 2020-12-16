@@ -1,5 +1,8 @@
 package nami.connector;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+
 public class NamiURIBuilder extends UriBuilder {
     // URL, die zum Login in NaMi verwendet wird.
     private static final String URL_NAMI_STARTUP = "/rest/nami/auth/manual/sessionStartup";
@@ -58,4 +61,5 @@ public class NamiURIBuilder extends UriBuilder {
     public static NamiURIBuilder getLoginURIBuilder(NamiServer server) {
         return new NamiURIBuilder(server, URL_NAMI_STARTUP, false);
     }
+
 }
