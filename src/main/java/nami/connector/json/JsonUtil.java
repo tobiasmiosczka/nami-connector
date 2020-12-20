@@ -20,8 +20,53 @@ import java.time.format.DateTimeParseException;
 
 public class JsonUtil {
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    private static final ThreadLocal<DateTimeFormatter> DATE_FORMATTER = new ThreadLocal<> () {
+
+        @Override
+        public DateTimeFormatter get() {
+            return super.get();
+        }
+
+        @Override
+        protected DateTimeFormatter initialValue() {
+            return DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        }
+
+        @Override
+        public void remove() {
+            super.remove();
+        }
+
+        @Override
+        public void set(DateTimeFormatter value) {
+            super.set(value);
+        }
+
+    };
+
+    private static final ThreadLocal<DateTimeFormatter> DATE_TIME_FORMATTER = new ThreadLocal<> () {
+
+        @Override
+        public DateTimeFormatter get() {
+            return super.get();
+        }
+
+        @Override
+        protected DateTimeFormatter initialValue() {
+            return DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        }
+
+        @Override
+        public void remove() {
+            super.remove();
+        }
+
+        @Override
+        public void set(DateTimeFormatter value) {
+            super.set(value);
+        }
+
+    };
 
     private static final Gson gson = new GsonBuilder()
             .registerTypeAdapter(
@@ -32,9 +77,7 @@ public class JsonUtil {
                             return null;
                         }
                         try {
-                            synchronized (DATE_TIME_FORMATTER) {
-                                return LocalDateTime.from(DATE_TIME_FORMATTER.parse(string));
-                            }
+                            return LocalDateTime.from(DATE_TIME_FORMATTER.get().parse(string));
                         } catch (DateTimeParseException e) {
                             e.printStackTrace();
                             return null;
@@ -47,9 +90,7 @@ public class JsonUtil {
                         if(string == null || string.equals(""))
                             return null;
                         try {
-                            synchronized (DATE_FORMATTER) {
-                                return LocalDate.from(DATE_FORMATTER.parse(string));
-                            }
+                            return LocalDate.from(DATE_FORMATTER.get().parse(string));
                         } catch (DateTimeParseException e) {
                             e.printStackTrace();
                             return null;
