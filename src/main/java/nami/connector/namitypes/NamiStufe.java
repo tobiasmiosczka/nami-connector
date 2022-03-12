@@ -2,6 +2,7 @@ package nami.connector.namitypes;
 
 public enum NamiStufe {
 
+    BIBER("Biber"),
     WOELFLING("Wölfling"),
     JUNGPFADFINDER("Jungpfadfinder"),
     PFADFINDER("Pfadfinder"),
