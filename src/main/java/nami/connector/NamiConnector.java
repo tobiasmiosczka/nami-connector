@@ -26,11 +26,11 @@ public class NamiConnector {
 
     public NamiConnector(NamiServer server) {
         this.server = server;
-        this.httpClient = new NamiHttpClient(server);
+        this.httpClient = new NamiHttpClient();
     }
 
     public void login(String username, String password) throws IOException, NamiLoginException, InterruptedException {
-        httpClient.login(username, password);
+        httpClient.login(server, username, password);
     }
 
     public UriBuilder getURIBuilder(String path) {

@@ -13,7 +13,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -23,13 +22,7 @@ public class NamiHttpClient {
 
     final CookieHandler cookieHandler = new CookieManager();
 
-    private final NamiServer server;
-
-    public NamiHttpClient(NamiServer server) {
-        this.server = server;
-    }
-
-    public void login(String username, String password) throws IOException, NamiLoginException, InterruptedException {
+    public void login(NamiServer server, String username, String password) throws IOException, NamiLoginException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(NamiUriBuilder.getLoginURIBuilder(server).build())
                 .setHeader("content-type", "application/x-www-form-urlencoded")
@@ -80,18 +73,16 @@ public class NamiHttpClient {
 
     private void checkResponse(HttpResponse<String> response) throws NamiException {
         if (response.statusCode() != HttpURLConnection.HTTP_OK) {
-            String redirectTarget = response.headers().firstValue("Location").orElse(null);
-            if (redirectTarget == null)
-                throw new NamiException("Statuscode of response is not 200 OK.");
+            String redirectTarget = response.headers().firstValue("Location")
+                    .orElseThrow(() -> new NamiException("Statuscode of response is not 200 OK."));
             LOGGER.warning("Got redirect to: " + redirectTarget);
             String redirectQuery = redirectTarget.substring(redirectTarget.indexOf('?') + 1);
             if (redirectTarget.contains("error.jsp"))
                 throw new NamiException(URLDecoder.decode(redirectQuery, StandardCharsets.UTF_8).split("=", 2)[1]);
 
         }
-        String contentType = response.headers().firstValue("content-type").orElse(null);
-        if (contentType == null)
-            throw new NamiException("Response has no Content-Type.");
+        String contentType = response.headers().firstValue("content-type")
+                .orElseThrow(() -> new NamiException("Response has no Content-Type."));
         if (!contentType.equals("application/json") && !contentType.contains("application/json" + ";"))
             throw new NamiException("Content-Type of response is " + contentType + "; expected application/json.");
     }
