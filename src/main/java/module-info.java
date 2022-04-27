@@ -5,4 +5,7 @@ open module nami.connector {
     exports nami.connector;
     exports nami.connector.exception;
     exports nami.connector.namitypes;
+    exports nami.connector.httpclient;
+    exports nami.connector.httpclient.impl;
+    exports nami.connector.uri;
 }

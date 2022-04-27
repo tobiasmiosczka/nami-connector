@@ -14,7 +14,10 @@ import com.google.gson.reflect.TypeToken;
 
 import nami.connector.exception.NamiException;
 import nami.connector.exception.NamiLoginException;
+import nami.connector.httpclient.NamiHttpClient;
+import nami.connector.httpclient.impl.NativeJavaNamiHttpClient;
 import nami.connector.namitypes.*;
+import nami.connector.uri.NamiUriFactory;
 
 public class NamiConnector {
 
@@ -26,7 +29,7 @@ public class NamiConnector {
 
     public NamiConnector(NamiServer server) {
         this.server = server;
-        this.httpClient = new NamiHttpClient();
+        this.httpClient = new NativeJavaNamiHttpClient();
         this.uriFactory = new NamiUriFactory(server);
     }
 

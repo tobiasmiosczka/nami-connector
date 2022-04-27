@@ -1,4 +1,4 @@
-package nami.connector;
+package nami.connector.namitypes;
 
 public class NamiResponse<DataT> {
     // Die folgenden Variablen stammen aus NaMi. Keinesfalls umbenennen.

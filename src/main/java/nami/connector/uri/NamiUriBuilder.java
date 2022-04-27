@@ -1,6 +1,8 @@
-package nami.connector;
+package nami.connector.uri;
 
-import static nami.connector.NamiUriFactory.URL_NAMI_STARTUP;
+import nami.connector.NamiServer;
+
+import static nami.connector.uri.NamiUriFactory.URL_NAMI_STARTUP;
 
 public class NamiUriBuilder extends UriBuilder {
 

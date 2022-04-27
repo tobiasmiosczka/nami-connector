@@ -1,4 +1,4 @@
-package nami.connector;
+package nami.connector.uri;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;

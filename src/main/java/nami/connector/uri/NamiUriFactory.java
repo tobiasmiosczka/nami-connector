@@ -1,5 +1,6 @@
-package nami.connector;
+package nami.connector.uri;
 
+import nami.connector.NamiServer;
 import nami.connector.json.JsonUtil;
 import nami.connector.namitypes.NamiSearchedValues;
 

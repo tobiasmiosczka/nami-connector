@@ -1,9 +1,13 @@
-package nami.connector;
+package nami.connector.httpclient.impl;
 
 import com.google.gson.reflect.TypeToken;
+import nami.connector.*;
 import nami.connector.exception.NamiException;
 import nami.connector.exception.NamiLoginException;
+import nami.connector.httpclient.NamiHttpClient;
 import nami.connector.json.JsonUtil;
+import nami.connector.namitypes.NamiResponse;
+import nami.connector.uri.NamiUriBuilder;
 import nami.connector.util.HttpUtil;
 
 import java.io.IOException;
@@ -16,12 +20,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.logging.Logger;
 
-public class NamiHttpClient {
+public class NativeJavaNamiHttpClient implements NamiHttpClient {
 
     private static final Logger LOGGER = Logger.getLogger(NamiConnector.class.getName());
 
     final CookieHandler cookieHandler = new CookieManager();
 
+    private HttpClient getHttpClient() {
+        return HttpClient
+                .newBuilder()
+                .cookieHandler(cookieHandler)
+                .build();
+    }
+
+    @Override
     public void login(NamiServer server, String username, String password) throws IOException, NamiLoginException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(NamiUriBuilder.getLoginURIBuilder(server).build())
@@ -52,6 +64,7 @@ public class NamiHttpClient {
                 "Login", "API");
     }
 
+    @Override
     public <T> T executeApiRequest(HttpRequest request, final Type type) throws IOException, NamiException, InterruptedException {
         LOGGER.info("HTTP Call: " + request.uri().toString());
         HttpResponse<String> response = execute(request);
@@ -62,13 +75,6 @@ public class NamiHttpClient {
     private HttpResponse<String> execute(HttpRequest request) throws IOException, InterruptedException {
         LOGGER.fine("Sending request to NaMi-Server: " + request.uri());
         return getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-    }
-
-    private HttpClient getHttpClient() {
-        return HttpClient
-                .newBuilder()
-                .cookieHandler(cookieHandler)
-                .build();
     }
 
     private void checkResponse(HttpResponse<String> response) throws NamiException {
