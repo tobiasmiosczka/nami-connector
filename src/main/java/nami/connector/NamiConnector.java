@@ -89,27 +89,24 @@ public class NamiConnector {
         NamiResponse<Collection<NamiMitglied>> resp = httpClient.executeApiRequest(
                 buildGetRequest(uriFactory.memberFromGroup(gruppierungsnummer)),
                 new TypeToken<NamiResponse<Collection<NamiMitglied>>>() {}.getType());
-        if (resp.isSuccess())
-            return resp.getData();
-        else
+        if (!resp.isSuccess())
             throw new NamiException("Could not get member list from Nami: " + resp.getMessage());
+        return resp.getData();
     }
 
     public Collection<NamiTaetigkeitAssignment> getTaetigkeiten(int id) throws IOException, NamiException, InterruptedException {
         NamiResponse<Collection<NamiTaetigkeitAssignment>> resp = httpClient.executeApiRequest(
                 buildGetRequest(uriFactory.namiTaetigkeiten(id)),
                 new TypeToken<NamiResponse<Collection<NamiTaetigkeitAssignment>>>() {}.getType());
-        if (resp.isSuccess())
-            return resp.getData();
-        else
+        if (!resp.isSuccess())
             return null;
+        return resp.getData();
     }
 
     public Collection<NamiGruppierung> getChildGruppierungen(int rootGruppierung) throws IOException, NamiException, InterruptedException {
-        NamiResponse<Collection<NamiGruppierung>> resp = httpClient.executeApiRequest(
+        Collection<NamiGruppierung> allChildren = httpClient.<NamiResponse<Collection<NamiGruppierung>>>executeApiRequest(
                 buildGetRequest(uriFactory.childGroups(rootGruppierung)),
-                new TypeToken<NamiResponse<Collection<NamiGruppierung>>>() {}.getType());
-        Collection<NamiGruppierung> allChildren = resp.getData();
+                new TypeToken<NamiResponse<Collection<NamiGruppierung>>>() {}.getType()).getData();
         Collection<NamiGruppierung> activeChildren = new LinkedList<>();
         for (NamiGruppierung child : allChildren) {
             activeChildren.add(child);
@@ -151,8 +148,7 @@ public class NamiConnector {
         NamiGruppierung found = getRootGruppierung().findGruppierung(gruppierungsnummer);
         if (found == null)
             throw new NamiException("Gruppierung not found: " + gruppierungsnummer);
-        else
-            return found;
+        return found;
     }
 
     private NamiGruppierung getRootGruppierungWithoutChildren() throws IOException, NamiException, InterruptedException {
@@ -170,11 +166,9 @@ public class NamiConnector {
         NamiResponse<NamiTaetigkeitAssignment> resp = httpClient.executeApiRequest(
                 buildGetRequest(uriFactory.taetigkeitByPersonIdAndTeatigkeitId(personId, taetigkeitId)),
                 new TypeToken<NamiResponse<NamiTaetigkeitAssignment>>() {}.getType());
-        if (resp.isSuccess()) {
+        if (resp.isSuccess())
             return resp.getData();
-        } else {
-            return null;
-        }
+        return null;
     }
 
     private static HttpRequest buildGetRequest(URI uri) {
