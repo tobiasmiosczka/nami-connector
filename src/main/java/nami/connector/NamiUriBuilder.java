@@ -1,6 +1,6 @@
 package nami.connector;
 
-public class NamiURIBuilder extends UriBuilder {
+public class NamiUriBuilder extends UriBuilder {
     // URL, die zum Login in NaMi verwendet wird.
     private static final String URL_NAMI_STARTUP = "/rest/nami/auth/manual/sessionStartup";
 
@@ -31,7 +31,7 @@ public class NamiURIBuilder extends UriBuilder {
     public static final String URL_SCHULUNGEN = "/nami/mitglied-ausbildung/filtered-for-navigation/mitglied/mitglied";
 
 
-    public NamiURIBuilder(NamiServer server, String path, boolean restUrl) {
+    public NamiUriBuilder(NamiServer server, String path, boolean restUrl) {
         super();
         if (server.getUseSsl())
             setScheme("https");
@@ -44,8 +44,8 @@ public class NamiURIBuilder extends UriBuilder {
         appendPath(path);
     }
 
-    public static NamiURIBuilder getLoginURIBuilder(NamiServer server) {
-        return new NamiURIBuilder(server, URL_NAMI_STARTUP, false);
+    public static NamiUriBuilder getLoginURIBuilder(NamiServer server) {
+        return new NamiUriBuilder(server, URL_NAMI_STARTUP, false);
     }
 
 }

@@ -53,6 +53,10 @@ public class UriBuilder {
         this.host = host;
     }
 
+    public UriBuilder setParameter(String key, int value) {
+        return this.setParameter(key, Integer.toString(value));
+    }
+
     public UriBuilder setParameter(String key, String value) {
         params.put(encode(key), encode(value));
         return this;
