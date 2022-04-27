@@ -65,8 +65,8 @@ public class NamiConnector {
 
     public NamiMitglied getMitgliedById(int id) throws IOException, NamiException, InterruptedException {
         UriBuilder builder = getURIBuilder(NamiUriBuilder.URL_NAMI_MITGLIEDER)
-                .appendPath("0")
-                .appendPath(Integer.toString(id));
+                .appendPath(0)
+                .appendPath(id);
         NamiResponse<NamiMitglied> resp = httpClient.executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
                 new TypeToken<NamiResponse<NamiMitglied>>() {}.getType());
@@ -79,7 +79,7 @@ public class NamiConnector {
 
     public Map<NamiBaustein, NamiSchulung> getSchulungen(int mitgliedsID) throws IOException, NamiException, InterruptedException {
         UriBuilder builder = getURIBuilder(NamiUriBuilder.URL_SCHULUNGEN)
-                .appendPath(Integer.toString(mitgliedsID))
+                .appendPath(mitgliedsID)
                 .appendPath("/flist");
         NamiResponse<Collection<NamiSchulung>> response = httpClient.executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
@@ -106,7 +106,7 @@ public class NamiConnector {
 
     public Collection<NamiMitglied> getMitgliederFromGruppierung(int gruppierungsnummer) throws NamiException, IOException, InterruptedException {
         UriBuilder builder = getURIBuilder(NamiUriBuilder.URL_NAMI_MITGLIEDER);
-        builder.appendPath(Integer.toString(gruppierungsnummer))
+        builder.appendPath(gruppierungsnummer)
                 .appendPath("flist")
                 .setParameter("limit", 5000)
                 .setParameter("page", 1)
@@ -122,7 +122,7 @@ public class NamiConnector {
 
     public Collection<NamiTaetigkeitAssignment> getTaetigkeiten(int id) throws IOException, NamiException, InterruptedException {
         UriBuilder builder = getURIBuilder(NamiUriBuilder.URL_NAMI_TAETIGKEIT)
-                .appendPath(Integer.toString(id))
+                .appendPath(id)
                 .appendPath("flist")
                 .setParameter("limit", MAX_TAETIGKEITEN)
                 .setParameter("page", 0)
@@ -138,7 +138,7 @@ public class NamiConnector {
 
     public Collection<NamiGruppierung> getChildGruppierungen(int rootGruppierung) throws IOException, NamiException, InterruptedException {
         UriBuilder builder = getURIBuilder(NamiUriBuilder.URL_GRUPPIERUNGEN)
-                .appendPath(Integer.toString(rootGruppierung))
+                .appendPath(rootGruppierung)
                 .setParameter("node", rootGruppierung);
         NamiResponse<Collection<NamiGruppierung>> resp = httpClient.executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
@@ -168,7 +168,7 @@ public class NamiConnector {
     private Collection<NamiGruppierung> getGruppierungenFromUser(int id) throws IOException, NamiException, InterruptedException {
         UriBuilder builder = getURIBuilder(NamiUriBuilder.URL_GRUPPIERUNGEN);
         if (id != -1)
-            builder.appendPath(String.valueOf(id));
+            builder.appendPath(id);
         NamiResponse<Collection<NamiGruppierung>> resp = httpClient.executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
                 new TypeToken<NamiResponse<Collection<NamiGruppierung>>>() {}.getType());
@@ -209,8 +209,8 @@ public class NamiConnector {
 
     public NamiTaetigkeitAssignment getTaetigkeit(int personId, int taetigkeitId) throws IOException, InterruptedException, NamiException {
         UriBuilder builder = getURIBuilder(NamiUriBuilder.URL_NAMI_TAETIGKEIT)
-                .appendPath(Integer.toString(personId))
-                .appendPath(Integer.toString(taetigkeitId));
+                .appendPath(personId)
+                .appendPath(taetigkeitId);
         NamiResponse<NamiTaetigkeitAssignment> resp = httpClient.executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
                 new TypeToken<NamiResponse<NamiTaetigkeitAssignment>>() {}.getType());

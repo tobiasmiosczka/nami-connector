@@ -34,6 +34,10 @@ public class UriBuilder {
         this.path = path;
     }
 
+    public UriBuilder appendPath(int pathAppendix) {
+        return appendPath(Integer.toString(pathAppendix));
+    }
+
     public UriBuilder appendPath(String pathAppendix) {
         String path = getPath();
         if (path.isEmpty())

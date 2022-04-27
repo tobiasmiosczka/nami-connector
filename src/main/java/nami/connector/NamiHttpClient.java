@@ -36,21 +36,19 @@ public class NamiHttpClient {
                 .POST(HttpUtil.ofFormData(buildLoginRequestFormData(username, password)))
                 .build();
         HttpResponse<String> response = execute(request);
-        if (response.statusCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
-            // need to follow one redirect
-            String redirectUrl = response.headers().map().get("Location").get(0);
-            if (redirectUrl != null) {
-                request = HttpRequest.newBuilder().uri(URI.create(redirectUrl)).GET().build();
-                response = execute(request);
-                LOGGER.info("Got redirect to: " + redirectUrl);
-                if (response.statusCode() == HttpURLConnection.HTTP_OK) {
-                    LOGGER.info("Authenticated to NaMi-Server with API.");
-                }
-            }
-        } else { //login failed
+        if (response.statusCode() != HttpURLConnection.HTTP_MOVED_TEMP) { //login failed
             NamiResponse<Object> namiResponse = JsonUtil.fromJson(response.body(), new TypeToken<NamiResponse<Object>>(){}.getType());
             throw new NamiLoginException(namiResponse.getMessage());
         }
+        // need to follow one redirect
+        String redirectUrl = response.headers().map().get("Location").get(0);
+        if (redirectUrl == null)
+            throw new NamiLoginException("No redirect location.");
+        response = execute(HttpRequest.newBuilder().uri(URI.create(redirectUrl)).GET().build());
+        LOGGER.info("Got redirect to: " + redirectUrl);
+        if (response.statusCode() != HttpURLConnection.HTTP_OK)
+            throw new NamiLoginException("Login failed.");
+        LOGGER.info("Authenticated to NaMi-Server with API.");
     }
 
     private static Map<String, String> buildLoginRequestFormData(String username, String password) {
@@ -83,20 +81,17 @@ public class NamiHttpClient {
     private void checkResponse(HttpResponse<String> response) throws NamiException {
         if (response.statusCode() != HttpURLConnection.HTTP_OK) {
             String redirectTarget = response.headers().firstValue("Location").orElse(null);
-            if (redirectTarget != null) {
-                LOGGER.warning("Got redirect to: " + redirectTarget);
-                String redirectQuery = redirectTarget.substring(redirectTarget.indexOf('?') + 1);
-                if (redirectTarget.contains("error.jsp")) {
-                    String msg = URLDecoder.decode(redirectQuery, StandardCharsets.UTF_8).split("=", 2)[1];
-                    throw new NamiException(msg);
-                }
-            }
-            throw new NamiException("Statuscode of response is not 200 OK.");
+            if (redirectTarget == null)
+                throw new NamiException("Statuscode of response is not 200 OK.");
+            LOGGER.warning("Got redirect to: " + redirectTarget);
+            String redirectQuery = redirectTarget.substring(redirectTarget.indexOf('?') + 1);
+            if (redirectTarget.contains("error.jsp"))
+                throw new NamiException(URLDecoder.decode(redirectQuery, StandardCharsets.UTF_8).split("=", 2)[1]);
+
         }
         String contentType = response.headers().firstValue("content-type").orElse(null);
         if (contentType == null)
             throw new NamiException("Response has no Content-Type.");
-        else
         if (!contentType.equals("application/json") && !contentType.contains("application/json" + ";"))
             throw new NamiException("Content-Type of response is " + contentType + "; expected application/json.");
     }
