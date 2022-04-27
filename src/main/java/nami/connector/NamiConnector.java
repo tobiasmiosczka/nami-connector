@@ -33,8 +33,6 @@ public class NamiConnector {
     private static final Logger log = Logger.getLogger(NamiConnector.class.getName());
 
     private final NamiServer server;
-    private String username;
-    private String password;
 
     private static final int INITIAL_LIMIT = 1000; // Maximale Anzahl der gefundenen Datensätze, wenn kein Limit vorgegeben wird.
     private static final int MAX_TAETIGKEITEN = 1000;
@@ -52,30 +50,11 @@ public class NamiConnector {
                 .build();
     }
 
-    public static HttpRequest.BodyPublisher ofFormData(Map<Object, Object> data) {
-        var builder = new StringBuilder();
-        for (Map.Entry<Object, Object> entry : data.entrySet()) {
-            if (builder.length() > 0)
-                builder.append("&");
-            builder.append(URLEncoder.encode(entry.getKey().toString(), StandardCharsets.UTF_8))
-                    .append("=")
-                    .append(URLEncoder.encode(entry.getValue().toString(), StandardCharsets.UTF_8));
-        }
-        return HttpRequest.BodyPublishers.ofString(builder.toString());
-    }
-
     public void login(String username, String password) throws IOException, NamiLoginException, InterruptedException {
-        this.username = username;
-        this.password = password;
-        Map<Object, Object> data = new HashMap<>();
-        data.put("username", username);
-        data.put("password", password);
-        data.put("redirectTo", "app.jsp");
-        data.put("Login", "API");
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(NamiURIBuilder.getLoginURIBuilder(server).build())
                 .setHeader("content-type", "application/x-www-form-urlencoded")
-                .POST(ofFormData(data))
+                .POST(ofFormData(buildLoginRequestFormData(username, password)))
                 .build();
         HttpResponse<String> response = execute(request);
         if (response.statusCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
@@ -314,5 +293,26 @@ public class NamiConnector {
         } else {
             return null;
         }
+    }
+
+    public static HttpRequest.BodyPublisher ofFormData(Map<String, String> data) {
+        var builder = new StringBuilder();
+        for (Map.Entry<String, String> entry : data.entrySet()) {
+            if (builder.length() > 0)
+                builder.append("&");
+            builder.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8))
+                    .append("=")
+                    .append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+        }
+        return HttpRequest.BodyPublishers.ofString(builder.toString());
+    }
+
+    private static Map<String, String> buildLoginRequestFormData(String username, String password) {
+        Map<String, String> data = new HashMap<>();
+        data.put("username", username);
+        data.put("password", password);
+        data.put("redirectTo", "app.jsp");
+        data.put("Login", "API");
+        return data;
     }
 }
