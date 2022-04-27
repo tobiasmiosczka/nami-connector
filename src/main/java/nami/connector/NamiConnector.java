@@ -39,8 +39,6 @@ public class NamiConnector {
     private static final int INITIAL_LIMIT = 1000; // Maximale Anzahl der gefundenen Datensätze, wenn kein Limit vorgegeben wird.
     private static final int MAX_TAETIGKEITEN = 1000;
 
-    private boolean isAuthenticated = false;
-
     public NamiConnector(NamiServer server) {
         this.server = server;
     }
@@ -67,8 +65,6 @@ public class NamiConnector {
     }
 
     public void login(String username, String password) throws IOException, NamiLoginException, InterruptedException {
-        if (isAuthenticated)
-            return;
         this.username = username;
         this.password = password;
         Map<Object, Object> data = new HashMap<>();
@@ -90,7 +86,6 @@ public class NamiConnector {
                 response = execute(request);
                 log.info("Got redirect to: " + redirectUrl);
                 if (response.statusCode() == HttpURLConnection.HTTP_OK) {
-                    isAuthenticated = true;
                     log.info("Authenticated to NaMi-Server with API.");
                 }
             }
@@ -128,8 +123,6 @@ public class NamiConnector {
 
     public <T> T executeApiRequest(HttpRequest request, final Type type) throws IOException, NamiException, InterruptedException {
         log.info("HTTP Call: " + request.uri().toString());
-        if (!isAuthenticated)
-            throw new NamiException("Did not login before API Request.");
         HttpResponse<String> response = execute(request);
         checkResponse(response);
         return JsonUtil.fromJson(response.body(), type);
