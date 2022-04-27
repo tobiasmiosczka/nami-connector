@@ -5,13 +5,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class NamiGruppierung {
-    // Die folgenden Variablen stammen aus NaMi. Keinesfalls umbenennen.
+
     private String descriptor;
     private int id;
 
     private Collection<NamiGruppierung> children;
 
-    private static final Pattern GRPNUM_PATTERN = Pattern.compile("[\\d]+");
+    private static final Pattern GROUP_NUMBER_PATTERN = Pattern.compile("[\\d]+");
 
     public String getDescriptor() {
         return descriptor;
@@ -27,7 +27,7 @@ public class NamiGruppierung {
         // Gruppierungen stimmen sie überein, aber eben nicht bei allen. Das ist
         // halt eine Merkwürdigkeit in NaMi, für die wir hier einen Workaround
         // brauchen.
-        Matcher match = GRPNUM_PATTERN.matcher(descriptor);
+        Matcher match = GROUP_NUMBER_PATTERN.matcher(descriptor);
         if (!match.find()) {
             throw new IllegalArgumentException("Could not find Gruppierungsnummer in descriptior: " + descriptor);
         }

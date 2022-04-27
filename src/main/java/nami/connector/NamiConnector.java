@@ -41,9 +41,8 @@ public class NamiConnector {
     // -> gebe stattdessen direkt die Collection zurück oder null, wenn kein
     // success
     public NamiResponse<Collection<NamiMitglied>> getSearchResult(NamiSearchedValues searchedValues, int limit, int page, int start) throws IOException, NamiException, InterruptedException {
-        URI uri = uriFactory.namiSearch(limit, page, start, searchedValues);
         return httpClient.executeApiRequest(
-                buildGetRequest(uri),
+                buildGetRequest(uriFactory.namiSearch(limit, page, start, searchedValues)),
                 new TypeToken<NamiResponse<Collection<NamiMitglied>>>() {}.getType());
     }
 
@@ -101,9 +100,7 @@ public class NamiConnector {
         NamiResponse<Collection<NamiTaetigkeitAssignment>> resp = httpClient.executeApiRequest(
                 buildGetRequest(uriFactory.namiTaetigkeiten(id)),
                 new TypeToken<NamiResponse<Collection<NamiTaetigkeitAssignment>>>() {}.getType());
-        if (!resp.isSuccess())
-            return null;
-        return resp.getData();
+        return (resp.isSuccess() ? resp.getData() : null);
     }
 
     public Collection<NamiGruppierung> getChildGruppierungen(int rootGruppierung) throws IOException, NamiException, InterruptedException {
@@ -169,9 +166,7 @@ public class NamiConnector {
         NamiResponse<NamiTaetigkeitAssignment> resp = httpClient.executeApiRequest(
                 buildGetRequest(uriFactory.taetigkeitByPersonIdAndTeatigkeitId(personId, taetigkeitId)),
                 new TypeToken<NamiResponse<NamiTaetigkeitAssignment>>() {}.getType());
-        if (resp.isSuccess())
-            return resp.getData();
-        return null;
+        return (resp.isSuccess() ? resp.getData() : null);
     }
 
     private static HttpRequest buildGetRequest(URI uri) {
