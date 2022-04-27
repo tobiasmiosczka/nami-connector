@@ -8,7 +8,7 @@ import nami.connector.httpclient.NamiHttpClient;
 import nami.connector.json.JsonUtil;
 import nami.connector.namitypes.NamiResponse;
 import nami.connector.uri.NamiUriBuilder;
-import nami.connector.util.HttpUtil;
+import nami.connector.httpclient.HttpUtil;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

@@ -1,4 +1,4 @@
-package nami.connector.util;
+package nami.connector.httpclient;
 
 import java.net.URLEncoder;
 import java.net.http.HttpRequest;
@@ -6,7 +6,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class HttpUtil {
-
 
     public static HttpRequest.BodyPublisher ofFormData(Map<String, String> data) {
         var builder = new StringBuilder();
