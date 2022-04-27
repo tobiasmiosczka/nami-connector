@@ -1,24 +1,12 @@
 package nami.connector;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.net.CookieHandler;
-import java.net.CookieManager;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import com.google.gson.reflect.TypeToken;
@@ -30,8 +18,7 @@ import nami.connector.namitypes.*;
 
 public class NamiConnector {
 
-    private static final Logger log = Logger.getLogger(NamiConnector.class.getName());
-
+    private final NamiHttpClient httpClient;
     private final NamiServer server;
 
     private static final int INITIAL_LIMIT = 1000; // Maximale Anzahl der gefundenen Datensätze, wenn kein Limit vorgegeben wird.
@@ -39,72 +26,11 @@ public class NamiConnector {
 
     public NamiConnector(NamiServer server) {
         this.server = server;
-    }
-
-    final CookieHandler cookieHandler = new CookieManager();
-
-    private HttpClient getHttpClient() {
-        return HttpClient
-                .newBuilder()
-                .cookieHandler(cookieHandler)
-                .build();
+        this.httpClient = new NamiHttpClient(server);
     }
 
     public void login(String username, String password) throws IOException, NamiLoginException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(NamiUriBuilder.getLoginURIBuilder(server).build())
-                .setHeader("content-type", "application/x-www-form-urlencoded")
-                .POST(ofFormData(buildLoginRequestFormData(username, password)))
-                .build();
-        HttpResponse<String> response = execute(request);
-        if (response.statusCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
-            // need to follow one redirect
-            String redirectUrl = response.headers().map().get("Location").get(0);
-            if (redirectUrl != null) {
-                request = HttpRequest.newBuilder().uri(URI.create(redirectUrl)).GET().build();
-                response = execute(request);
-                log.info("Got redirect to: " + redirectUrl);
-                if (response.statusCode() == HttpURLConnection.HTTP_OK) {
-                    log.info("Authenticated to NaMi-Server with API.");
-                }
-            }
-        } else { //login failed
-            NamiResponse<Object> namiResponse = JsonUtil.fromJson(response.body(), new TypeToken<NamiResponse<Object>>(){}.getType());
-            throw new NamiLoginException(namiResponse.getMessage());
-        }
-    }
-
-    private HttpResponse<String> execute(HttpRequest request) throws IOException, InterruptedException {
-        log.fine("Sending request to NaMi-Server: " + request.uri());
-        return getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-    }
-
-    private void checkResponse(HttpResponse<String> response) throws NamiException {
-        if (response.statusCode() != HttpURLConnection.HTTP_OK) {
-            String redirectTarget = response.headers().firstValue("Location").orElse(null);
-            if (redirectTarget != null) {
-                log.warning("Got redirect to: " + redirectTarget);
-                String redirectQuery = redirectTarget.substring(redirectTarget.indexOf('?') + 1);
-                if (redirectTarget.contains("error.jsp")) {
-                    String msg = URLDecoder.decode(redirectQuery, StandardCharsets.UTF_8).split("=", 2)[1];
-                    throw new NamiException(msg);
-                }
-            }
-            throw new NamiException("Statuscode of response is not 200 OK.");
-        }
-        String contentType = response.headers().firstValue("content-type").orElse(null);
-        if (contentType == null)
-            throw new NamiException("Response has no Content-Type.");
-        else
-            if (!contentType.equals("application/json") && !contentType.contains("application/json" + ";"))
-                throw new NamiException("Content-Type of response is " + contentType + "; expected application/json.");
-    }
-
-    public <T> T executeApiRequest(HttpRequest request, final Type type) throws IOException, NamiException, InterruptedException {
-        log.info("HTTP Call: " + request.uri().toString());
-        HttpResponse<String> response = execute(request);
-        checkResponse(response);
-        return JsonUtil.fromJson(response.body(), type);
+        httpClient.login(username, password);
     }
 
     public UriBuilder getURIBuilder(String path) {
@@ -124,7 +50,7 @@ public class NamiConnector {
                 .setParameter("page", page)
                 .setParameter("start", start)
                 .setParameter("searchedValues", JsonUtil.toJson(searchedValues));
-        return executeApiRequest(
+        return httpClient.executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
                 new TypeToken<NamiResponse<Collection<NamiMitglied>>>() {}.getType());
     }
@@ -141,7 +67,7 @@ public class NamiConnector {
         UriBuilder builder = getURIBuilder(NamiUriBuilder.URL_NAMI_MITGLIEDER)
                 .appendPath("0")
                 .appendPath(Integer.toString(id));
-        NamiResponse<NamiMitglied> resp = executeApiRequest(
+        NamiResponse<NamiMitglied> resp = httpClient.executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
                 new TypeToken<NamiResponse<NamiMitglied>>() {}.getType());
         return (resp.isSuccess() ? resp.getData() : null);
@@ -155,7 +81,7 @@ public class NamiConnector {
         UriBuilder builder = getURIBuilder(NamiUriBuilder.URL_SCHULUNGEN)
                 .appendPath(Integer.toString(mitgliedsID))
                 .appendPath("/flist");
-        NamiResponse<Collection<NamiSchulung>> response = executeApiRequest(
+        NamiResponse<Collection<NamiSchulung>> response = httpClient.executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
                 new TypeToken<NamiResponse<Collection<NamiSchulung>>>() {}.getType());
         return response.getData().stream()
@@ -164,7 +90,7 @@ public class NamiConnector {
 
     public List<NamiEnum> getTaetigkeiten() throws NamiException, IOException, InterruptedException {
         UriBuilder builder = getURIBuilder(NamiUriBuilder.URL_TAETIGKEITEN);
-        NamiResponse<List<NamiEnum>> resp = executeApiRequest(
+        NamiResponse<List<NamiEnum>> resp = httpClient.executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
                 new TypeToken<NamiResponse<List<NamiEnum>>>() {}.getType());
         return resp.getData();
@@ -172,7 +98,7 @@ public class NamiConnector {
 
     public List<NamiEnum> getUntergliederungen() throws NamiException, IOException, InterruptedException {
         UriBuilder builder = getURIBuilder(NamiUriBuilder.URL_UNTERGLIEDERUNGEN);
-        NamiResponse<List<NamiEnum>> resp = executeApiRequest(
+        NamiResponse<List<NamiEnum>> resp = httpClient.executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
                 new TypeToken<NamiResponse<List<NamiEnum>>>() {}.getType());
         return resp.getData();
@@ -185,7 +111,7 @@ public class NamiConnector {
                 .setParameter("limit", 5000)
                 .setParameter("page", 1)
                 .setParameter("start", 0);
-        NamiResponse<Collection<NamiMitglied>> resp = executeApiRequest(
+        NamiResponse<Collection<NamiMitglied>> resp = httpClient.executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
                 new TypeToken<NamiResponse<Collection<NamiMitglied>>>() {}.getType());
         if (resp.isSuccess())
@@ -201,7 +127,7 @@ public class NamiConnector {
                 .setParameter("limit", MAX_TAETIGKEITEN)
                 .setParameter("page", 0)
                 .setParameter("start", 0);
-        NamiResponse<Collection<NamiTaetigkeitAssignment>> resp = executeApiRequest(
+        NamiResponse<Collection<NamiTaetigkeitAssignment>> resp = httpClient.executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
                 new TypeToken<NamiResponse<Collection<NamiTaetigkeitAssignment>>>() {}.getType());
         if (resp.isSuccess())
@@ -214,7 +140,7 @@ public class NamiConnector {
         UriBuilder builder = getURIBuilder(NamiUriBuilder.URL_GRUPPIERUNGEN)
                 .appendPath(Integer.toString(rootGruppierung))
                 .setParameter("node", rootGruppierung);
-        NamiResponse<Collection<NamiGruppierung>> resp = executeApiRequest(
+        NamiResponse<Collection<NamiGruppierung>> resp = httpClient.executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
                 new TypeToken<NamiResponse<Collection<NamiGruppierung>>>() {}.getType());
         Collection<NamiGruppierung> allChildren = resp.getData();
@@ -243,7 +169,7 @@ public class NamiConnector {
         UriBuilder builder = getURIBuilder(NamiUriBuilder.URL_GRUPPIERUNGEN);
         if (id != -1)
             builder.appendPath(String.valueOf(id));
-        NamiResponse<Collection<NamiGruppierung>> resp = executeApiRequest(
+        NamiResponse<Collection<NamiGruppierung>> resp = httpClient.executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
                 new TypeToken<NamiResponse<Collection<NamiGruppierung>>>() {}.getType());
         Collection<NamiGruppierung> results = resp.getData();
@@ -271,7 +197,7 @@ public class NamiConnector {
         UriBuilder builder = getURIBuilder(NamiUriBuilder.URL_GRUPPIERUNGEN)
                 .appendPath("root")
                 .setParameter("node", "root");
-        NamiResponse<Collection<NamiGruppierung>> resp = executeApiRequest(
+        NamiResponse<Collection<NamiGruppierung>> resp = httpClient.executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
                 new TypeToken<NamiResponse<Collection<NamiGruppierung>>>() {}.getType());
         if (!resp.isSuccess())
@@ -285,7 +211,7 @@ public class NamiConnector {
         UriBuilder builder = getURIBuilder(NamiUriBuilder.URL_NAMI_TAETIGKEIT)
                 .appendPath(Integer.toString(personId))
                 .appendPath(Integer.toString(taetigkeitId));
-        NamiResponse<NamiTaetigkeitAssignment> resp = executeApiRequest(
+        NamiResponse<NamiTaetigkeitAssignment> resp = httpClient.executeApiRequest(
                 HttpRequest.newBuilder().uri(builder.build()).GET().build(),
                 new TypeToken<NamiResponse<NamiTaetigkeitAssignment>>() {}.getType());
         if (resp.isSuccess()) {
@@ -293,26 +219,5 @@ public class NamiConnector {
         } else {
             return null;
         }
-    }
-
-    public static HttpRequest.BodyPublisher ofFormData(Map<String, String> data) {
-        var builder = new StringBuilder();
-        for (Map.Entry<String, String> entry : data.entrySet()) {
-            if (builder.length() > 0)
-                builder.append("&");
-            builder.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8))
-                    .append("=")
-                    .append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
-        }
-        return HttpRequest.BodyPublishers.ofString(builder.toString());
-    }
-
-    private static Map<String, String> buildLoginRequestFormData(String username, String password) {
-        Map<String, String> data = new HashMap<>();
-        data.put("username", username);
-        data.put("password", password);
-        data.put("redirectTo", "app.jsp");
-        data.put("Login", "API");
-        return data;
     }
 }
