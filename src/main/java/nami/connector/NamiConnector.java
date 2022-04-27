@@ -40,7 +40,7 @@ public class NamiConnector {
     public NamiResponse<Collection<NamiMitglied>> getSearchResult(NamiSearchedValues searchedValues, int limit, int page, int start) throws IOException, NamiException, InterruptedException {
         URI uri = uriFactory.namiSearch(limit, page, start, searchedValues);
         return httpClient.executeApiRequest(
-                HttpRequest.newBuilder().uri(uri).GET().build(),
+                buildGetRequest(uri),
                 new TypeToken<NamiResponse<Collection<NamiMitglied>>>() {}.getType());
     }
 
@@ -54,7 +54,7 @@ public class NamiConnector {
 
     public NamiMitglied getMitgliedById(int id) throws IOException, NamiException, InterruptedException {
         NamiResponse<NamiMitglied> resp = httpClient.executeApiRequest(
-                HttpRequest.newBuilder().uri(uriFactory.namiMitglieder(id)).GET().build(),
+                buildGetRequest(uriFactory.namiMitglieder(id)),
                 new TypeToken<NamiResponse<NamiMitglied>>() {}.getType());
         return (resp.isSuccess() ? resp.getData() : null);
     }
@@ -65,7 +65,7 @@ public class NamiConnector {
 
     public Map<NamiBaustein, NamiSchulung> getSchulungen(int mitgliedsID) throws IOException, NamiException, InterruptedException {
         NamiResponse<Collection<NamiSchulung>> response = httpClient.executeApiRequest(
-                HttpRequest.newBuilder().uri(uriFactory.namiSchulungen(mitgliedsID)).GET().build(),
+                buildGetRequest(uriFactory.namiSchulungen(mitgliedsID)),
                 new TypeToken<NamiResponse<Collection<NamiSchulung>>>() {}.getType());
         return response.getData().stream()
                 .collect(Collectors.toMap(NamiSchulung::getBaustein, Function.identity()));
@@ -73,21 +73,21 @@ public class NamiConnector {
 
     public List<NamiEnum> getTaetigkeiten() throws NamiException, IOException, InterruptedException {
         NamiResponse<List<NamiEnum>> resp = httpClient.executeApiRequest(
-                HttpRequest.newBuilder().uri(uriFactory.namiTaetigkeiten()).GET().build(),
+                buildGetRequest(uriFactory.namiTaetigkeiten()),
                 new TypeToken<NamiResponse<List<NamiEnum>>>() {}.getType());
         return resp.getData();
     }
 
     public List<NamiEnum> getUntergliederungen() throws NamiException, IOException, InterruptedException {
         NamiResponse<List<NamiEnum>> resp = httpClient.executeApiRequest(
-                HttpRequest.newBuilder().uri(uriFactory.namiUntergliederungen()).GET().build(),
+                buildGetRequest(uriFactory.namiUntergliederungen()),
                 new TypeToken<NamiResponse<List<NamiEnum>>>() {}.getType());
         return resp.getData();
     }
 
     public Collection<NamiMitglied> getMitgliederFromGruppierung(int gruppierungsnummer) throws NamiException, IOException, InterruptedException {
         NamiResponse<Collection<NamiMitglied>> resp = httpClient.executeApiRequest(
-                HttpRequest.newBuilder().uri(uriFactory.memberFromGroup(gruppierungsnummer)).GET().build(),
+                buildGetRequest(uriFactory.memberFromGroup(gruppierungsnummer)),
                 new TypeToken<NamiResponse<Collection<NamiMitglied>>>() {}.getType());
         if (resp.isSuccess())
             return resp.getData();
@@ -97,7 +97,7 @@ public class NamiConnector {
 
     public Collection<NamiTaetigkeitAssignment> getTaetigkeiten(int id) throws IOException, NamiException, InterruptedException {
         NamiResponse<Collection<NamiTaetigkeitAssignment>> resp = httpClient.executeApiRequest(
-                HttpRequest.newBuilder().uri(uriFactory.namiTaetigkeiten(id)).GET().build(),
+                buildGetRequest(uriFactory.namiTaetigkeiten(id)),
                 new TypeToken<NamiResponse<Collection<NamiTaetigkeitAssignment>>>() {}.getType());
         if (resp.isSuccess())
             return resp.getData();
@@ -107,7 +107,7 @@ public class NamiConnector {
 
     public Collection<NamiGruppierung> getChildGruppierungen(int rootGruppierung) throws IOException, NamiException, InterruptedException {
         NamiResponse<Collection<NamiGruppierung>> resp = httpClient.executeApiRequest(
-                HttpRequest.newBuilder().uri(uriFactory.childGroups(rootGruppierung)).GET().build(),
+                buildGetRequest(uriFactory.childGroups(rootGruppierung)),
                 new TypeToken<NamiResponse<Collection<NamiGruppierung>>>() {}.getType());
         Collection<NamiGruppierung> allChildren = resp.getData();
         Collection<NamiGruppierung> activeChildren = new LinkedList<>();
@@ -133,7 +133,7 @@ public class NamiConnector {
 
     private Collection<NamiGruppierung> getGruppierungenFromUser(int id) throws IOException, NamiException, InterruptedException {
         NamiResponse<Collection<NamiGruppierung>> resp = httpClient.executeApiRequest(
-                HttpRequest.newBuilder().uri(uriFactory.groupsByUser(id)).GET().build(),
+                buildGetRequest(uriFactory.groupsByUser(id)),
                 new TypeToken<NamiResponse<Collection<NamiGruppierung>>>() {}.getType());
         Collection<NamiGruppierung> results = resp.getData();
         Collection<NamiGruppierung> newResults = new LinkedList<>();
@@ -157,7 +157,7 @@ public class NamiConnector {
 
     private NamiGruppierung getRootGruppierungWithoutChildren() throws IOException, NamiException, InterruptedException {
         NamiResponse<Collection<NamiGruppierung>> resp = httpClient.executeApiRequest(
-                HttpRequest.newBuilder().uri(uriFactory.rootGroupWithoutChildren()).GET().build(),
+                buildGetRequest(uriFactory.rootGroupWithoutChildren()),
                 new TypeToken<NamiResponse<Collection<NamiGruppierung>>>() {}.getType());
         if (!resp.isSuccess())
             throw new NamiException("Could not get root Gruppierung");
@@ -168,12 +168,16 @@ public class NamiConnector {
 
     public NamiTaetigkeitAssignment getTaetigkeit(int personId, int taetigkeitId) throws IOException, InterruptedException, NamiException {
         NamiResponse<NamiTaetigkeitAssignment> resp = httpClient.executeApiRequest(
-                HttpRequest.newBuilder().uri(uriFactory.taetigkeitByPersonIdAndTeatigkeitId(personId, taetigkeitId)).GET().build(),
+                buildGetRequest(uriFactory.taetigkeitByPersonIdAndTeatigkeitId(personId, taetigkeitId)),
                 new TypeToken<NamiResponse<NamiTaetigkeitAssignment>>() {}.getType());
         if (resp.isSuccess()) {
             return resp.getData();
         } else {
             return null;
         }
+    }
+
+    private static HttpRequest buildGetRequest(URI uri) {
+        return HttpRequest.newBuilder().uri(uri).GET().build();
     }
 }
