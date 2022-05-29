@@ -1,5 +1,7 @@
 package nami.connector.namitypes;
 
+import java.util.Arrays;
+
 public enum NamiBeitragsart {
 
     VOLLER_BEITRAG("Voller Beitrag"),
@@ -20,12 +22,12 @@ public enum NamiBeitragsart {
         return tag;
     }
 
-    public static NamiBeitragsart fromString(String str) {
-        if(str == null || str.isEmpty())
+    public static NamiBeitragsart fromString(String string) {
+        if(string == null || string.isEmpty())
             return KEIN_BEITRAG;
-        for(NamiBeitragsart beitragsart : NamiBeitragsart.values())
-            if (beitragsart.getTag().equals(str))
-                return beitragsart;
-        throw new IllegalArgumentException("Unexpected String for Beitragsart:" + str);
+        return Arrays.stream(NamiBeitragsart.values())
+                .filter(e -> e.getTag().equals(string))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unexpected String for Beitragsart:" + string));
     }
 }

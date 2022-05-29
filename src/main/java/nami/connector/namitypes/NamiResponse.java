@@ -1,9 +1,9 @@
-package nami.connector;
+package nami.connector.namitypes;
 
-public class NamiResponse<DataT> {
-    // Die folgenden Variablen stammen aus NaMi. Keinesfalls umbenennen.
+public class NamiResponse<T> {
+
     private boolean success;
-    private DataT data;
+    private T data;
     private int totalEntries;
     private String message;
     // private String responseType;
@@ -12,7 +12,7 @@ public class NamiResponse<DataT> {
         return success;
     }
 
-    public DataT getData() {
+    public T getData() {
         return data;
     }
 

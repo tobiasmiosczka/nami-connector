@@ -1,4 +1,4 @@
-package nami.connector;
+package nami.connector.namitypes;
 
 import java.time.LocalDate;
 

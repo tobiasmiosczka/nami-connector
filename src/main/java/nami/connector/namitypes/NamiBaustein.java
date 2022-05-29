@@ -1,5 +1,7 @@
 package nami.connector.namitypes;
 
+import java.util.Arrays;
+
 public enum NamiBaustein {
     MLK("Abgeschlossene Modulausbildung"),
     WBK("Woodbadge-Kurs oder Woodbadge-Kurs II"),
@@ -30,12 +32,10 @@ public enum NamiBaustein {
         return name;
     }
 
-    public static NamiBaustein fromString(String baustein) {
-        for (NamiBaustein b : NamiBaustein.values()) {
-            if (b.getName().equals(baustein)) {
-                return b;
-            }
-        }
-        return null;
+    public static NamiBaustein fromString(String string) {
+        return Arrays.stream(NamiBaustein.values())
+                .filter(e -> e.getName().equals(string))
+                .findFirst()
+                .orElse(null);
     }
 }

@@ -1,4 +1,4 @@
-package nami.connector;
+package nami.connector.uri;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -34,6 +34,10 @@ public class UriBuilder {
         this.path = path;
     }
 
+    public UriBuilder appendPath(int pathAppendix) {
+        return appendPath(Integer.toString(pathAppendix));
+    }
+
     public UriBuilder appendPath(String pathAppendix) {
         String path = getPath();
         if (path.isEmpty())
@@ -51,6 +55,10 @@ public class UriBuilder {
 
     public void setHost(String host) {
         this.host = host;
+    }
+
+    public UriBuilder setParameter(String key, int value) {
+        return this.setParameter(key, Integer.toString(value));
     }
 
     public UriBuilder setParameter(String key, String value) {
