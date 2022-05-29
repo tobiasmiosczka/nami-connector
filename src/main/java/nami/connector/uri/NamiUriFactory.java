@@ -61,19 +61,11 @@ public class NamiUriFactory {
                 .build();
     }
 
-    public URI namiSchulungen(int mitgliedsID) {
+    public URI namiSchulungen(int userId) {
         return getURIBuilder(URL_SCHULUNGEN)
-                .appendPath(mitgliedsID)
-                .appendPath("/flist")
+                .appendPath(userId)
+                .appendPath("flist")
                 .build();
-    }
-
-    private UriBuilder getURIBuilder(String path) {
-        return getURIBuilder(path, true);
-    }
-
-    private UriBuilder getURIBuilder(String path, boolean restUrl) {
-        return new NamiUriBuilder(namiServer, path, restUrl);
     }
 
     public URI namiTaetigkeiten() {
@@ -132,5 +124,9 @@ public class NamiUriFactory {
                 .setParameter("page", 0)
                 .setParameter("start", 0)
                 .build();
+    }
+
+    private UriBuilder getURIBuilder(String path) {
+        return new NamiUriBuilder(namiServer, path, true);
     }
 }

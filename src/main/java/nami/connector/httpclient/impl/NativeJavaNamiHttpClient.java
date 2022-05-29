@@ -56,25 +56,25 @@ public class NativeJavaNamiHttpClient implements NamiHttpClient {
         LOGGER.info("Authenticated to NaMi-Server with API.");
     }
 
+    @Override
+    public <T> NamiResponse<T> executeApiRequest(HttpRequest request, final Type type) throws IOException, NamiException, InterruptedException {
+        LOGGER.info("HTTP Call: " + request.uri().toString());
+        HttpResponse<String> response = execute(request);
+        checkResponse(response);
+        return JsonUtil.fromJson(response.body(), TypeToken.getParameterized(NamiResponse.class, type).getType());
+    }
+
+    private HttpResponse<String> execute(HttpRequest request) throws IOException, InterruptedException {
+        LOGGER.fine("Sending request to NaMi-Server: " + request.uri());
+        return getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
     private static Map<String, String> buildLoginRequestFormData(String username, String password) {
         return Map.of(
                 "username", username,
                 "password", password,
                 "redirectTo", "app.jsp",
                 "Login", "API");
-    }
-
-    @Override
-    public <T> T executeApiRequest(HttpRequest request, final Type type) throws IOException, NamiException, InterruptedException {
-        LOGGER.info("HTTP Call: " + request.uri().toString());
-        HttpResponse<String> response = execute(request);
-        checkResponse(response);
-        return JsonUtil.fromJson(response.body(), type);
-    }
-
-    private HttpResponse<String> execute(HttpRequest request) throws IOException, InterruptedException {
-        LOGGER.fine("Sending request to NaMi-Server: " + request.uri());
-        return getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
     }
 
     private void checkResponse(HttpResponse<String> response) throws NamiException {
