@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static nami.connector.StringUtil.fillZeroes;
+
 public class NamiGruppierung {
 
     private String descriptor;
@@ -56,13 +58,6 @@ public class NamiGruppierung {
         if (thisE.compareTo(targetE) == 0)
             return groupId;
         return fillZeroes(groupId.substring(0, targetE.getSignificantChars()), 6);
-    }
-
-    private static String fillZeroes(String number, int length) {
-        StringBuilder result = new StringBuilder(number);
-        while (result.length() < length)
-            result.append("0");
-        return result.toString();
     }
 
     public NamiEbene getEbene() {
