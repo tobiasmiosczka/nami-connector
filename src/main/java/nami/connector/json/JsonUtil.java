@@ -29,7 +29,7 @@ public class JsonUtil {
     private static final ThreadLocal<DateTimeFormatter> DATE_FORMATTER = withInitial(() -> ofPattern("dd.MM.yyyy"));
     private static final ThreadLocal<DateTimeFormatter> DATE_TIME_FORMATTER = withInitial(() -> ofPattern("yyyy-MM-dd HH:mm:ss"));
 
-    private static final Gson gson = new GsonBuilder()
+    private static final Gson GSON = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, deserializer(JsonUtil::toLocalDateTime))
             .registerTypeAdapter(LocalDate.class, deserializer(JsonUtil::toLocalDate))
             .registerTypeAdapter(NamiEbene.class, deserializer(NamiEbene::fromString))
@@ -42,11 +42,11 @@ public class JsonUtil {
             .create();
 
     public static String toJson(Object o) {
-        return gson.toJson(o);
+        return GSON.toJson(o);
     }
 
     public static <T> T fromJson(String json, Type typeOfT) {
-        return gson.fromJson(json, typeOfT);
+        return GSON.fromJson(json, typeOfT);
     }
 
     private static <T> JsonDeserializer<T> deserializer(Function<String, T> function) {
