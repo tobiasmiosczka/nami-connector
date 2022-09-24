@@ -1,6 +1,7 @@
 open module nami.connector {
     requires transitive com.google.gson;
     requires transitive java.net.http;
+    requires java.logging;
 
     exports nami.connector;
     exports nami.connector.exception;
