@@ -10,6 +10,10 @@ on:
         description: 'Release version'
         required: true
         default: 'x.x.x'
+        
+  push:
+    branches: 
+    - main
 
 jobs:
   build:
@@ -31,7 +35,12 @@ jobs:
         settings-path: ${{ github.workspace }} # location for the settings.xml file
         
     - name: Set projects Maven version to GitHub Action GUI set version
+      if: ${{ github.event.inputs.releaseversion != ''}}
       run: mvn versions:set "-DnewVersion=${{ github.event.inputs.releaseversion }}"
+      
+    - name: Set projects Maven version to main-SNAPSHOT
+      if: ${{ github.event.inputs.releaseversion == ''}}
+      run: mvn versions:set "-DnewVersion=main-SNAPSHOT"
       
     - name: Build with Maven
       run: mvn -B package --file pom.xml
