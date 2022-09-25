@@ -1,4 +1,4 @@
 *.iml
 .idea/
 target/
-src/test/nami/connector/NamiConnectorTest.java
+src/test/java/nami/connector/NamiConnectorTest.java
