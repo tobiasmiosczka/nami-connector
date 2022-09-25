@@ -9,7 +9,8 @@ on:
       releaseversion:
         description: 'Release version'
         required: true
-        default: 'x.x.x'
+        default: '0.0.0-SNAPSHOT'
+        type: string
         
   push:
     branches: 
@@ -40,7 +41,7 @@ jobs:
       
     - name: Set projects Maven version to main-SNAPSHOT
       if: ${{ github.event.inputs.releaseversion == ''}}
-      run: mvn versions:set "-DnewVersion=main-SNAPSHOT"
+      run: mvn versions:set "-DnewVersion=0.0.0-SNAPSHOT"
       
     - name: Build with Maven
       run: mvn -B package --file pom.xml
