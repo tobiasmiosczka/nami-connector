@@ -57,11 +57,20 @@ public class NativeJavaNamiHttpClient implements NamiHttpClient {
     }
 
     @Override
-    public <T> NamiResponse<T> executeApiRequest(HttpRequest request, final Type type) throws IOException, NamiException, InterruptedException {
+    public <T> T executeApiRequest(HttpRequest request, final Type type) throws NamiException {
         LOGGER.info("HTTP Call: " + request.uri().toString());
-        HttpResponse<String> response = execute(request);
-        checkResponse(response);
-        return JsonUtil.fromJson(response.body(), TypeToken.getParameterized(NamiResponse.class, type).getType());
+        try {
+            HttpResponse<String> response = execute(request);
+            checkResponse(response);
+            NamiResponse<T> namiResponse = JsonUtil.fromJson(response.body(), TypeToken.getParameterized(NamiResponse.class, type).getType());
+            if (!namiResponse.isSuccess()) {
+                throw new NamiApiException(type, request.uri(), namiResponse.getMessage());
+            }
+            return namiResponse.getData();
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            throw new NamiApiException(type, request.uri(), e.getMessage());
+        }
     }
 
     private HttpResponse<String> execute(HttpRequest request) throws IOException, InterruptedException {
