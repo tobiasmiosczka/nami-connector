@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import com.google.gson.reflect.TypeToken;
 import nami.connector.exception.NamiException;
-import nami.connector.exception.NamiLoginException;
 import nami.connector.httpclient.NamiHttpClient;
 import nami.connector.httpclient.impl.NativeJavaNamiHttpClient;
 import nami.connector.namitypes.NamiBaustein;
@@ -50,11 +49,15 @@ public class NamiConnector {
         return Optional.ofNullable(response);
     }
 
-    public Map<NamiBaustein, NamiSchulung> getSchulungen(int userId) throws NamiException {
-        return this.<Collection<NamiSchulung>>executeApiRequest(
+    public Collection<NamiSchulung> getTrainingsByUser(int userId) throws NamiException {
+        return this.executeApiRequest(
                 buildGetRequest(uriFactory.namiSchulungen(userId)),
-                new TypeToken<Collection<NamiSchulung>>() {}.getType()).stream()
-                .collect(Collectors.toMap(NamiSchulung::getBaustein, Function.identity()));
+                new TypeToken<Collection<NamiSchulung>>() {}.getType());
+    }
+
+    public Map<NamiBaustein, NamiSchulung> getLatestTrainingsByUser(int userId) throws NamiException {
+        Collection<NamiSchulung> result = getTrainingsByUser(userId);
+        return reduceToLatest(result);
     }
 
     public List<NamiEnum> getTaetigkeiten() throws NamiException {
@@ -141,5 +144,10 @@ public class NamiConnector {
 
     private <T> T executeApiRequest(HttpRequest request, Type type) throws NamiException {
         return httpClient.executeApiRequest(request, type);
+    }
+
+    //TODO: fix
+    private static Map<NamiBaustein, NamiSchulung> reduceToLatest(final Collection<NamiSchulung> trainings) {
+        return trainings.stream().collect(Collectors.toMap(NamiSchulung::getBaustein, Function.identity()));
     }
 }

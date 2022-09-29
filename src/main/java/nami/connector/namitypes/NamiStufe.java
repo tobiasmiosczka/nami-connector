@@ -9,23 +9,14 @@ public enum NamiStufe {
     ROVER("Rover"),
     ANDERE("Andere");
 
-    private final String stufe;
+    private final String name;
 
-    NamiStufe(String stufe) {
-        this.stufe = stufe;
+    NamiStufe(String name) {
+        this.name = name;
     }
 
     @Override
     public String toString() {
-        return stufe;
-    }
-
-    public static NamiStufe fromString(String string) {
-        if(string == null)
-            return ANDERE;
-        for(NamiStufe stufe : NamiStufe.values())
-            if(stufe.toString().equals(string))
-                return stufe;
-        return ANDERE;
+        return name;
     }
 }

@@ -5,26 +5,18 @@ public enum NamiMitgliedstyp {
     NICHT_MITGLIED("Nicht-Mitglied"),
     SCHNUPPER_MITGLIED("Schnuppermitglied");
 
-    private final String tag;
+    private final String name;
 
-    NamiMitgliedstyp(String tag) {
-        this.tag = tag;
+    NamiMitgliedstyp(String name) {
+        this.name = name;
     }
 
-    public String getTag() {
-        return tag;
+    public String getName() {
+        return name;
     }
 
+    @Override
     public String toString() {
-        return this.name();
-    }
-
-    public static NamiMitgliedstyp fromString(String str) {
-        if (str == null)
-            throw new IllegalArgumentException("Unexpected String for Mitgliedstyp:" + str);
-        for (NamiMitgliedstyp mitgliedstyp : NamiMitgliedstyp.values())
-            if (mitgliedstyp.getTag().equals(str))
-                return mitgliedstyp;
-        throw new IllegalArgumentException("Unexpected String for Mitgliedstyp: " + str);
+        return name;
     }
 }
