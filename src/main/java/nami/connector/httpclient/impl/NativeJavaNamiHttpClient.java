@@ -34,13 +34,13 @@ public class NativeJavaNamiHttpClient implements NamiHttpClient {
     }
 
     @Override
-    public void login(NamiServer server, String username, String password) throws IOException, NamiLoginException, InterruptedException {
+    public void login(NamiServer server, String username, String password) throws NamiException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(NamiUriBuilder.getLoginURIBuilder(server).build())
                 .setHeader("content-type", "application/x-www-form-urlencoded")
                 .POST(HttpUtil.ofFormData(buildLoginRequestFormData(username, password)))
                 .build();
-        HttpResponse<String> response = execute(request);
+        HttpResponse<String> response = execute(request, Object.class);
         if (response.statusCode() != HttpURLConnection.HTTP_MOVED_TEMP) { //login failed
             NamiResponse<Object> namiResponse = JsonUtil.fromJson(response.body(), new TypeToken<NamiResponse<Object>>(){}.getType());
             throw new NamiLoginException(namiResponse.getMessage());
@@ -49,7 +49,7 @@ public class NativeJavaNamiHttpClient implements NamiHttpClient {
         String redirectUrl = response.headers().map().get("Location").get(0);
         if (redirectUrl == null)
             throw new NamiLoginException("No redirect location.");
-        response = execute(HttpRequest.newBuilder().uri(URI.create(redirectUrl)).GET().build());
+        response = execute(HttpRequest.newBuilder().uri(URI.create(redirectUrl)).GET().build(), Object.class);
         LOGGER.info("Got redirect to: " + redirectUrl);
         if (response.statusCode() != HttpURLConnection.HTTP_OK)
             throw new NamiLoginException("Login failed.");
@@ -59,23 +59,23 @@ public class NativeJavaNamiHttpClient implements NamiHttpClient {
     @Override
     public <T> T executeApiRequest(HttpRequest request, final Type type) throws NamiException {
         LOGGER.info("HTTP Call: " + request.uri().toString());
-        try {
-            HttpResponse<String> response = execute(request);
+            HttpResponse<String> response = execute(request, type);
             checkResponse(response);
             NamiResponse<T> namiResponse = JsonUtil.fromJson(response.body(), TypeToken.getParameterized(NamiResponse.class, type).getType());
             if (!namiResponse.isSuccess()) {
                 throw new NamiApiException(type, request.uri(), namiResponse.getMessage());
             }
             return namiResponse.getData();
+    }
+
+    private HttpResponse<String> execute(HttpRequest request, final Type type) throws NamiApiException {
+        LOGGER.fine("Sending request to NaMi-Server: " + request.uri());
+        try {
+            return getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             throw new NamiApiException(type, request.uri(), e.getMessage());
         }
-    }
-
-    private HttpResponse<String> execute(HttpRequest request) throws IOException, InterruptedException {
-        LOGGER.fine("Sending request to NaMi-Server: " + request.uri());
-        return getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
     }
 
     private static Map<String, String> buildLoginRequestFormData(String username, String password) {

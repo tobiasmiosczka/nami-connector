@@ -2,15 +2,13 @@ package nami.connector.httpclient;
 
 import nami.connector.NamiServer;
 import nami.connector.exception.NamiException;
-import nami.connector.exception.NamiLoginException;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.http.HttpRequest;
 
 public interface NamiHttpClient {
 
-    void login(NamiServer server, String username, String password) throws IOException, NamiLoginException, InterruptedException;
+    void login(NamiServer server, String username, String password) throws NamiException;
 
-    <T> T executeApiRequest(HttpRequest request, Type type) throws IOException, NamiException, InterruptedException;
+    <T> T executeApiRequest(HttpRequest request, Type type) throws NamiException;
 }
