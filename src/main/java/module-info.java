@@ -1,5 +1,5 @@
 open module nami.connector {
-    requires transitive com.google.gson;
+    requires transitive com.fasterxml.jackson.databind;
     requires transitive java.net.http;
     requires java.logging;
 

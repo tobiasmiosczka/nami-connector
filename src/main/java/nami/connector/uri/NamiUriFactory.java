@@ -8,6 +8,8 @@ import java.net.URI;
 
 public class NamiUriFactory {
 
+    private static final JsonUtil jsonUtil = new JsonUtil();
+
     // URL, die zum Login in NaMi verwendet wird.
     static final String URL_NAMI_STARTUP = "/rest/nami/auth/manual/sessionStartup";
 
@@ -50,7 +52,7 @@ public class NamiUriFactory {
                 .setParameter("limit", limit)
                 .setParameter("page", page)
                 .setParameter("start", start)
-                .setParameter("searchedValues", JsonUtil.toJson(searchedValues))
+                .setParameter("searchedValues", jsonUtil.toJson(searchedValues))
                 .build();
     }
 

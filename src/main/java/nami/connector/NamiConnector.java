@@ -4,7 +4,7 @@ import java.lang.reflect.Type;
 import java.net.http.HttpRequest;
 import java.util.*;
 
-import com.google.gson.reflect.TypeToken;
+import com.fasterxml.jackson.core.type.TypeReference;
 import nami.connector.exception.NamiException;
 import nami.connector.httpclient.NamiHttpClient;
 import nami.connector.httpclient.impl.NativeJavaNamiHttpClient;
@@ -44,14 +44,14 @@ public class NamiConnector {
     }
 
     public Optional<NamiMitglied> getMitgliedById(int id) throws NamiException {
-        NamiMitglied response = this.executeApiRequest(buildGetRequest(uriFactory.namiMitglieder(id)), new TypeToken<NamiMitglied>() {}.getType());
+        NamiMitglied response = this.executeApiRequest(buildGetRequest(uriFactory.namiMitglieder(id)), new TypeReference<NamiMitglied>() {}.getType());
         return Optional.ofNullable(response);
     }
 
     public Collection<NamiSchulung> getTrainingsByUser(int userId) throws NamiException {
         return this.executeApiRequest(
                 buildGetRequest(uriFactory.namiSchulungen(userId)),
-                new TypeToken<Collection<NamiSchulung>>() {}.getType());
+                new TypeReference<Collection<NamiSchulung>>() {}.getType());
     }
 
     public Map<NamiBaustein, NamiSchulung> getLatestTrainingsByUser(int userId) throws NamiException {
@@ -62,31 +62,31 @@ public class NamiConnector {
     public List<NamiEnum> getTaetigkeiten() throws NamiException {
         return this.executeApiRequest(
                 buildGetRequest(uriFactory.namiTaetigkeiten()),
-                new TypeToken<List<NamiEnum>>() {}.getType());
+                new TypeReference<List<NamiEnum>>() {}.getType());
     }
 
     public List<NamiEnum> getUntergliederungen() throws NamiException {
         return this.executeApiRequest(
                 buildGetRequest(uriFactory.namiUntergliederungen()),
-                new TypeToken<List<NamiEnum>>() {}.getType());
+                new TypeReference<List<NamiEnum>>() {}.getType());
     }
 
     public Collection<NamiMitglied> getMitgliederFromGruppierung(int gruppierungsnummer) throws NamiException {
         return this.executeApiRequest(
                 buildGetRequest(uriFactory.memberFromGroup(gruppierungsnummer)),
-                new TypeToken<Collection<NamiMitglied>>() {}.getType());
+                new TypeReference<Collection<NamiMitglied>>() {}.getType());
     }
 
     public Collection<NamiTaetigkeitAssignment> getTaetigkeiten(int id) throws NamiException {
         return this.executeApiRequest(
                 buildGetRequest(uriFactory.namiTaetigkeiten(id)),
-                new TypeToken<Collection<NamiTaetigkeitAssignment>>() {}.getType());
+                new TypeReference<Collection<NamiTaetigkeitAssignment>>() {}.getType());
     }
 
     public Collection<NamiGruppierung> getChildGruppierungen(int rootGruppierung) throws NamiException {
         Collection<NamiGruppierung> allChildren = httpClient.executeApiRequest(
                 buildGetRequest(uriFactory.childGroups(rootGruppierung)),
-                new TypeToken<Collection<NamiGruppierung>>() {}.getType());
+                new TypeReference<Collection<NamiGruppierung>>() {}.getType());
         Collection<NamiGruppierung> activeChildren = new LinkedList<>();
         for (NamiGruppierung child : allChildren) {
             activeChildren.add(child);
@@ -108,7 +108,7 @@ public class NamiConnector {
     public Collection<NamiGruppierung> getGruppierungenFromUser(int id) throws NamiException {
         Collection<NamiGruppierung> results = this.executeApiRequest(
                 buildGetRequest(uriFactory.groupsByUser(id)),
-                new TypeToken<Collection<NamiGruppierung>>() {}.getType());
+                new TypeReference<Collection<NamiGruppierung>>() {}.getType());
         Collection<NamiGruppierung> newResults = new LinkedList<>();
         for (NamiGruppierung namiGruppierung : results)
             newResults.addAll(getGruppierungenFromUser(namiGruppierung.getId()));
@@ -123,13 +123,13 @@ public class NamiConnector {
     public NamiTaetigkeitAssignment getTaetigkeit(int personId, int taetigkeitId) throws NamiException {
         return this.executeApiRequest(
                 buildGetRequest(uriFactory.taetigkeitByPersonIdAndTeatigkeitId(personId, taetigkeitId)),
-                new TypeToken<NamiTaetigkeitAssignment>() {}.getType());
+                new TypeReference<NamiTaetigkeitAssignment>() {}.getType());
     }
 
     private NamiGruppierung getRootGruppierungWithoutChildren() throws NamiException {
         Collection<NamiGruppierung> response = this.executeApiRequest(
                 buildGetRequest(uriFactory.rootGroupWithoutChildren()),
-                new TypeToken<Collection<NamiGruppierung>>() {}.getType());
+                new TypeReference<Collection<NamiGruppierung>>() {}.getType());
         NamiGruppierung rootGrp = response.iterator().next();
         rootGrp.setChildren(null);
         return rootGrp;
@@ -138,7 +138,7 @@ public class NamiConnector {
     private Collection<NamiMitglied> getSearchResult(NamiSearchedValues searchedValues, int limit, int page, int start) throws NamiException {
         return this.executeApiRequest(
                 buildGetRequest(uriFactory.namiSearch(limit, page, start, searchedValues)),
-                new TypeToken<Collection<NamiMitglied>>() {}.getType());
+                new TypeReference<Collection<NamiMitglied>>() {}.getType());
     }
 
     private <T> T executeApiRequest(HttpRequest request, Type type) throws NamiException {

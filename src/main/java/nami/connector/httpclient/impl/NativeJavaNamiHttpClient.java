@@ -1,6 +1,8 @@
 package nami.connector.httpclient.impl;
 
-import com.google.gson.reflect.TypeToken;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import nami.connector.*;
 import nami.connector.exception.NamiException;
 import nami.connector.exception.NamiLoginException;
@@ -23,8 +25,10 @@ import java.util.logging.Logger;
 public class NativeJavaNamiHttpClient implements NamiHttpClient {
 
     private static final Logger LOGGER = Logger.getLogger(NamiConnector.class.getName());
+    private static final TypeFactory FACTORY = TypeFactory.defaultInstance();
 
-    final CookieHandler cookieHandler = new CookieManager();
+    private final CookieHandler cookieHandler = new CookieManager();
+    private JsonUtil jsonUtil = new JsonUtil();
 
     private static Map<String, String> buildLoginRequestFormData(final String username, final String password) {
         return Map.of(
@@ -50,7 +54,8 @@ public class NativeJavaNamiHttpClient implements NamiHttpClient {
                 .build();
         HttpResponse<String> response = execute(request, Object.class);
         if (response.statusCode() != HttpURLConnection.HTTP_MOVED_TEMP) { //login failed
-            NamiResponse<Object> namiResponse = JsonUtil.fromJson(response.body(), new TypeToken<NamiResponse<Object>>(){}.getType());
+            NamiResponse<Object> namiResponse = jsonUtil.fromJson(response.body(), new TypeReference<NamiResponse<Object>>() {
+            }.getType());
             throw new NamiLoginException(namiResponse.getMessage());
         }
         // need to follow one redirect
@@ -67,13 +72,14 @@ public class NativeJavaNamiHttpClient implements NamiHttpClient {
     @Override
     public <T> T executeApiRequest(final HttpRequest request, final Type type) throws NamiException {
         LOGGER.info("HTTP Call: " + request.uri().toString());
-            HttpResponse<String> response = execute(request, type);
-            checkResponse(response);
-            NamiResponse<T> namiResponse = JsonUtil.fromJson(response.body(), TypeToken.getParameterized(NamiResponse.class, type).getType());
-            if (!namiResponse.isSuccess()) {
-                throw new NamiApiException(type, request.uri(), namiResponse.getMessage());
-            }
-            return namiResponse.getData();
+        HttpResponse<String> response = execute(request, type);
+        checkResponse(response);
+        JavaType javaType = FACTORY.constructParametricType(NamiResponse.class, FACTORY.constructType(type));
+        NamiResponse<T> namiResponse = jsonUtil.fromJson(response.body(), javaType);
+        if (!namiResponse.isSuccess()) {
+            throw new NamiApiException(type, request.uri(), namiResponse.getMessage());
+        }
+        return namiResponse.getData();
     }
 
     private HttpResponse<String> execute(final HttpRequest request, final Type type) throws NamiApiException {

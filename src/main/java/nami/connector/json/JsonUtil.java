@@ -1,8 +1,12 @@
 package nami.connector.json;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import nami.connector.namitypes.NamiBaustein;
 import nami.connector.namitypes.NamiBeitragsart;
 import nami.connector.namitypes.NamiEbene;
@@ -11,6 +15,7 @@ import nami.connector.namitypes.NamiMitgliedStatus;
 import nami.connector.namitypes.NamiMitgliedstyp;
 import nami.connector.namitypes.NamiStufe;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,27 +37,37 @@ public class JsonUtil {
     private static final ThreadLocal<DateTimeFormatter> DATE_FORMATTER = withInitial(() -> ofPattern("dd.MM.yyyy"));
     private static final ThreadLocal<DateTimeFormatter> DATE_TIME_FORMATTER = withInitial(() -> ofPattern("yyyy-MM-dd HH:mm:ss"));
 
-    private static final Gson GSON = new GsonBuilder()
+    private static final Module NAMI_MODULE = new SimpleModule()
+            .addDeserializer(LocalDateTime.class, deserializer(JsonUtil::toLocalDateTime, LocalDateTime.class))
+            .addDeserializer(LocalDate.class, deserializer(JsonUtil::toLocalDate, LocalDate.class))
+            .addDeserializer(NamiEbene.class, deserializer(NamiEbene::fromString, NamiEbene.class))
+            .addDeserializer(NamiBeitragsart.class, deserializer(NamiBeitragsart::fromString, NamiBeitragsart.class))
+            .addDeserializer(NamiGeschlecht.class, deserializer(NamiGeschlecht::fromString, NamiGeschlecht.class))
+            .addDeserializer(NamiBaustein.class, deserializer(NamiBaustein.class))
+            .addDeserializer(NamiMitgliedStatus.class, deserializer(NamiMitgliedStatus.class))
+            .addDeserializer(NamiMitgliedstyp.class, deserializer(NamiMitgliedstyp.class))
+            .addDeserializer(NamiStufe.class, deserializer(NamiStufe.class));
 
-            .registerTypeAdapter(LocalDateTime.class, deserializer(JsonUtil::toLocalDateTime))
-            .registerTypeAdapter(LocalDate.class, deserializer(JsonUtil::toLocalDate))
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(NAMI_MODULE)
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-            .registerTypeAdapter(NamiEbene.class, deserializer(NamiEbene::fromString))
-            .registerTypeAdapter(NamiBeitragsart.class, deserializer(NamiBeitragsart::fromString))
-            .registerTypeAdapter(NamiGeschlecht.class, deserializer(NamiGeschlecht::fromString))
-
-            .registerTypeAdapter(NamiBaustein.class, deserializer(NamiBaustein.class))
-            .registerTypeAdapter(NamiMitgliedStatus.class, deserializer(NamiMitgliedStatus.class))
-            .registerTypeAdapter(NamiMitgliedstyp.class, deserializer(NamiMitgliedstyp.class))
-            .registerTypeAdapter(NamiStufe.class, deserializer(NamiStufe.class))
-            .create();
-
-    public static String toJson(Object o) {
-        return GSON.toJson(o);
+    public String toJson(Object o) {
+        try {
+            return this.objectMapper.writeValueAsString(o);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
-    public static <T> T fromJson(String json, Type typeOfT) {
-        return GSON.fromJson(json, typeOfT);
+    public <T> T fromJson(String json, Type type) {
+        try {
+            return objectMapper.readValue(json, TypeFactory.defaultInstance().constructType(type));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     private static <E extends Enum<E>> JsonDeserializer<E> deserializer(Class<E> eEnum) {
@@ -68,11 +83,16 @@ public class JsonUtil {
                 throw new IllegalArgumentException("Unexpected String for " + tClass.getName() + ": " + s);
             }
             return result;
-        });
+        }, tClass);
     }
 
-    private static <T> JsonDeserializer<T> deserializer(Function<String, T> function) {
-        return (j, t, c) -> function.apply(j.getAsString());
+    private static <T> JsonDeserializer<T> deserializer(Function<String, T> function, Class<T> tClass) {
+        return new StdDeserializer<>(tClass) {
+            @Override
+            public T deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+                return function.apply(p.getValueAsString());
+            }
+        };
     }
 
     private static LocalDateTime toLocalDateTime(String s) {
