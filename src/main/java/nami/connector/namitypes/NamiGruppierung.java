@@ -1,7 +1,6 @@
 package nami.connector.namitypes;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

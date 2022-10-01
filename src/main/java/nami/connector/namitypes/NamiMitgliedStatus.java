@@ -5,22 +5,18 @@ public enum NamiMitgliedStatus {
     AKTIV("Aktiv"),
     INAKTIV("Inaktiv");
 
-    private final String tag;
+    private final String name;
 
-    NamiMitgliedStatus(String tag) {
-        this.tag = tag;
+    NamiMitgliedStatus(String name) {
+        this.name = name;
     }
 
-    public String getTag() {
-        return tag;
+    public String getName() {
+        return name;
     }
 
-    public static NamiMitgliedStatus fromString(String str) {
-        if (str == null ||str.isEmpty())
-            throw new IllegalArgumentException("Unexpected String for MitgliedStatus: " + str);
-        for (NamiMitgliedStatus mitgliedStatus : NamiMitgliedStatus.values())
-            if (mitgliedStatus.getTag().equals(str))
-                return mitgliedStatus;
-        throw new IllegalArgumentException("Unexpected String for MitgliedStatus: " + str);
+    @Override
+    public String toString() {
+        return name;
     }
 }
