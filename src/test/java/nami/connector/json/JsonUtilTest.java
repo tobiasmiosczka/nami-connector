@@ -1,5 +1,6 @@
 package nami.connector.json;
 
+import nami.connector.namitypes.NamiStufe;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -47,6 +48,17 @@ class JsonUtilTest {
         assertEquals(1993, result.getYear());
         assertEquals(10, result.getMonthValue());
         assertEquals(19, result.getDayOfMonth());
+    }
+
+    @Test void testFromJsonWithValidAgeGroupShouldReturnAgeGroup() {
+        //arrange
+        String json = "\"Jungpfadfinder\"";
+
+        //act
+        NamiStufe result = JsonUtil.fromJson(json, NamiStufe.class);
+
+        //assert
+        assertEquals(NamiStufe.JUNGPFADFINDER, result);
     }
 
     @Execution(ExecutionMode.CONCURRENT)
