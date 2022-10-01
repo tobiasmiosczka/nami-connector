@@ -3,8 +3,6 @@ package nami.connector;
 import java.lang.reflect.Type;
 import java.net.http.HttpRequest;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import com.google.gson.reflect.TypeToken;
 import nami.connector.exception.NamiException;
@@ -20,6 +18,7 @@ import nami.connector.namitypes.NamiSearchedValues;
 import nami.connector.namitypes.NamiTaetigkeitAssignment;
 import nami.connector.uri.NamiUriFactory;
 
+import static nami.connector.NamiUtil.reduceToLatest;
 import static nami.connector.httpclient.HttpUtil.buildGetRequest;
 
 public class NamiConnector {
@@ -28,7 +27,7 @@ public class NamiConnector {
     private final NamiServer server;
     private final NamiUriFactory uriFactory;
 
-    private static final int INITIAL_LIMIT = 1000; // Maximale Anzahl der gefundenen Datensätze, wenn kein Limit vorgegeben wird.
+    private static final int INITIAL_LIMIT = 1000;
 
     public NamiConnector(NamiServer server) {
         this.server = server;
@@ -144,10 +143,5 @@ public class NamiConnector {
 
     private <T> T executeApiRequest(HttpRequest request, Type type) throws NamiException {
         return httpClient.executeApiRequest(request, type);
-    }
-
-    //TODO: fix
-    private static Map<NamiBaustein, NamiSchulung> reduceToLatest(final Collection<NamiSchulung> trainings) {
-        return trainings.stream().collect(Collectors.toMap(NamiSchulung::getBaustein, Function.identity()));
     }
 }
