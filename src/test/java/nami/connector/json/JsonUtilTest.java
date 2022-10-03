@@ -1,5 +1,6 @@
 package nami.connector.json;
 
+import nami.connector.httpclient.impl.JsonUtil;
 import nami.connector.namitypes.NamiStufe;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;

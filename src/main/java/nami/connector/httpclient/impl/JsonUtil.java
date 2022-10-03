@@ -1,4 +1,4 @@
-package nami.connector.json;
+package nami.connector.httpclient.impl;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -48,9 +48,7 @@ public class JsonUtil {
             .addDeserializer(NamiMitgliedstyp.class, deserializer(NamiMitgliedstyp.class))
             .addDeserializer(NamiStufe.class, deserializer(NamiStufe.class));
 
-    private final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(NAMI_MODULE)
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private final ObjectMapper objectMapper = prepareObjectMapper();
 
     public String toJson(Object o) {
         try {
@@ -114,5 +112,11 @@ public class JsonUtil {
             LOGGER.log(Level.WARNING, "Could not deserialize. ", e);
             return null;
         }
+    }
+
+    public static ObjectMapper prepareObjectMapper() {
+        return new ObjectMapper()
+                .registerModule(NAMI_MODULE)
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 }
