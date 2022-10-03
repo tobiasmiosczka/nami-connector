@@ -1,6 +1,4 @@
-package nami.connector;
-
-import nami.connector.exception.NamiException;
+package nami.connector.exception;
 
 import java.lang.reflect.Type;
 import java.net.URI;

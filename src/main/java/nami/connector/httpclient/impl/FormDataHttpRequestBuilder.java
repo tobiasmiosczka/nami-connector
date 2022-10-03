@@ -10,10 +10,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class FormDataHttpRequestBuilder {
 
-    private URI uri;
-    private Map<String, String> data = new HashMap<>();
+    private final HttpRequest.Builder httpRequestBuilder = HttpRequest.newBuilder()
+            .setHeader("content-type", "application/x-www-form-urlencoded");
 
-    private static HttpRequest.BodyPublisher build(Map<String, String> data) {
+    private final Map<String, String> data = new HashMap<>();
+
+    private static HttpRequest.BodyPublisher build(final Map<String, String> data) {
         String s = data.entrySet().stream()
                 .map(e -> encode(e.getKey(), UTF_8) + "=" + encode(e.getValue(), UTF_8))
                 .reduce(((s1, s2) -> s1 + "&" + s2))
@@ -21,20 +23,18 @@ public class FormDataHttpRequestBuilder {
         return HttpRequest.BodyPublishers.ofString(s);
     }
 
-    public FormDataHttpRequestBuilder withValue(String key, String value) {
+    public FormDataHttpRequestBuilder withValue(final String key, final String value) {
         data.put(key, value);
         return this;
     }
 
-    public FormDataHttpRequestBuilder uri(URI uri) {
-        this.uri = uri;
+    public FormDataHttpRequestBuilder uri(final URI uri) {
+        httpRequestBuilder.uri(uri);
         return this;
     }
 
     public HttpRequest build() {
-        return HttpRequest.newBuilder()
-                .uri(uri)
-                .setHeader("content-type", "application/x-www-form-urlencoded")
+        return httpRequestBuilder
                 .POST(build(data))
                 .build();
     }

@@ -1,9 +1,8 @@
 package nami.connector.httpclient.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import nami.connector.*;
+import nami.connector.exception.NamiApiException;
 import nami.connector.exception.NamiException;
 import nami.connector.exception.NamiLoginException;
 import nami.connector.httpclient.NamiHttpClient;
@@ -16,14 +15,15 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+
+import static nami.connector.httpclient.impl.NamiResponseBodyHandler.listHandler;
+import static nami.connector.httpclient.impl.NamiResponseBodyHandler.singleHandler;
 
 public class NativeJavaNamiHttpClient implements NamiHttpClient {
 
     private static final Logger LOGGER = Logger.getLogger(NamiConnector.class.getName());
-    private static final TypeFactory FACTORY = TypeFactory.defaultInstance();
 
     private final CookieHandler cookieHandler = new CookieManager();
     private final JsonUtil jsonUtil = new JsonUtil();
@@ -47,27 +47,26 @@ public class NativeJavaNamiHttpClient implements NamiHttpClient {
 
     @Override
     public void login(final NamiServer server, final String username, final String password) throws NamiException {
-        HttpResponse<String> response = execute(buildLoginRequest(server, username, password));
-        if (response.statusCode() != HttpURLConnection.HTTP_MOVED_TEMP) {
-            NamiResponse<Object> namiResponse = jsonUtil.fromJson(response.body(), new TypeReference<NamiResponse<Object>>() {}.getType());
+        HttpResponse<String> response1 = execute(buildLoginRequest(server, username, password));
+        if (response1.statusCode() != HttpURLConnection.HTTP_MOVED_TEMP) {
+            NamiResponse<Object> namiResponse = jsonUtil.fromJson(response1.body(), new TypeReference<NamiResponse<Object>>() {}.getType());
             throw new NamiLoginException(namiResponse.getMessage());
         }
-        String redirectUrl = response.headers().map().get("Location").get(0);
+        String redirectUrl = response1.headers().map().get("Location").get(0);
         if (redirectUrl == null) {
             throw new NamiLoginException("No redirect location.");
         }
-        response = execute(HttpRequest.newBuilder().uri(URI.create(redirectUrl)).GET().build());
+        HttpResponse<String>response2 = execute(HttpRequest.newBuilder().uri(URI.create(redirectUrl)).GET().build());
         LOGGER.info("Got redirect to: " + redirectUrl);
-        if (response.statusCode() != HttpURLConnection.HTTP_OK)
+        if (response2.statusCode() != HttpURLConnection.HTTP_OK)
             throw new NamiLoginException("Login failed.");
         LOGGER.info("Authenticated to NaMi-Server with API.");
     }
 
     @Override
     public <T> T getSingle(final URI uri, final Class<T> tClass) throws NamiException {
-        JavaType type = FACTORY.constructParametricType(NamiResponse.class, FACTORY.constructType(tClass));
         try {
-            HttpResponse<NamiResponse<T>> response = getHttpClient().send(buildGetRequest(uri), new JacksonBodyHandler<>(type, JsonUtil.prepareObjectMapper()));
+            HttpResponse<NamiResponse<T>> response = getHttpClient().send(buildGetRequest(uri), singleHandler(tClass));
             validateResponse(response);
             return response.body().getData();
         } catch (IOException | InterruptedException e) {
@@ -77,9 +76,8 @@ public class NativeJavaNamiHttpClient implements NamiHttpClient {
 
     @Override
     public <T> List<T> getList(final URI uri, final Class<T> tClass) throws NamiException {
-        JavaType type = FACTORY.constructParametricType(NamiResponse.class, FACTORY.constructCollectionType(ArrayList.class, FACTORY.constructType(tClass)));
         try {
-            HttpResponse<NamiResponse<List<T>>> response = getHttpClient().send(buildGetRequest(uri), new JacksonBodyHandler<>(type, JsonUtil.prepareObjectMapper()));
+            HttpResponse<NamiResponse<List<T>>> response = getHttpClient().send(buildGetRequest(uri), listHandler(tClass));
             validateResponse(response);
             return response.body().getData();
         } catch (IOException | InterruptedException e) {
@@ -117,7 +115,7 @@ public class NativeJavaNamiHttpClient implements NamiHttpClient {
         }
     }
 
-    public static HttpRequest buildGetRequest(URI uri) {
+    private static HttpRequest buildGetRequest(final URI uri) {
         return HttpRequest.newBuilder().uri(uri).GET().build();
     }
 }

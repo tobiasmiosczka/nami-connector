@@ -13,7 +13,7 @@ public class JacksonBodyHandler<T> implements HttpResponse.BodyHandler<T> {
     private final JavaType typeReference;
     private final ObjectMapper objectMapper;
 
-    public JacksonBodyHandler(JavaType typeReference, ObjectMapper objectMapper) {
+    JacksonBodyHandler(JavaType typeReference, ObjectMapper objectMapper) {
         this.typeReference = typeReference;
         this.objectMapper = objectMapper;
     }
