@@ -70,13 +70,13 @@ public class JsonUtil {
     }
 
     private static LocalDateTime toLocalDateTime(String s) {
-        if (s == null || s.equals(""))
+        if (s == null || s.isEmpty())
             return null;
         return tryGetOrNull(() -> LocalDateTime.from(DATE_TIME_FORMATTER.parse(s)));
     }
 
     private static LocalDate toLocalDate(String s) {
-        if (s == null || s.equals(""))
+        if (s == null || s.isEmpty())
             return null;
         return tryGetOrNull(() -> LocalDate.from(DATE_FORMATTER.parse(s)));
     }
