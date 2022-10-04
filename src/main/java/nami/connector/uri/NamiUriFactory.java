@@ -3,7 +3,6 @@ package nami.connector.uri;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import nami.connector.NamiServer;
-import nami.connector.httpclient.impl.JsonUtil;
 import nami.connector.namitypes.NamiSearchedValues;
 
 import java.net.URI;

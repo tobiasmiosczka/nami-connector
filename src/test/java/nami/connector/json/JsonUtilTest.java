@@ -1,6 +1,5 @@
 package nami.connector.json;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import nami.connector.httpclient.impl.JsonUtil;
 import nami.connector.namitypes.NamiStufe;
@@ -20,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class JsonUtilTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = JsonUtil.prepareObjectMapper();
 
     @Test
     public void testFromJsonWithValidDateTimeShouldReturnDate() throws Exception {

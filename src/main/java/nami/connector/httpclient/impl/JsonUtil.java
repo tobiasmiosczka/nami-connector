@@ -25,14 +25,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import static java.lang.ThreadLocal.withInitial;
 import static java.time.format.DateTimeFormatter.ofPattern;
 
 public class JsonUtil {
 
     private static final Logger LOGGER = Logger.getLogger(JsonUtil.class.getName());
-    private static final ThreadLocal<DateTimeFormatter> DATE_FORMATTER = withInitial(() -> ofPattern("dd.MM.yyyy"));
-    private static final ThreadLocal<DateTimeFormatter> DATE_TIME_FORMATTER = withInitial(() -> ofPattern("yyyy-MM-dd HH:mm:ss"));
+    private static final DateTimeFormatter DATE_FORMATTER = ofPattern("dd.MM.yyyy");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private static final Module NAMI_MODULE = new SimpleModule()
             .addDeserializer(LocalDateTime.class, deserializer(JsonUtil::toLocalDateTime, LocalDateTime.class))
@@ -71,15 +70,15 @@ public class JsonUtil {
     }
 
     private static LocalDateTime toLocalDateTime(String s) {
-        if(s == null || s.equals(""))
+        if (s == null || s.equals(""))
             return null;
-        return tryGetOrNull(() -> LocalDateTime.from(DATE_TIME_FORMATTER.get().parse(s)));
+        return tryGetOrNull(() -> LocalDateTime.from(DATE_TIME_FORMATTER.parse(s)));
     }
 
     private static LocalDate toLocalDate(String s) {
-        if(s == null || s.equals(""))
+        if (s == null || s.equals(""))
             return null;
-        return tryGetOrNull(() -> LocalDate.from(DATE_FORMATTER.get().parse(s)));
+        return tryGetOrNull(() -> LocalDate.from(DATE_FORMATTER.parse(s)));
     }
 
     private static <T> T tryGetOrNull(Supplier<T> supplier) {
