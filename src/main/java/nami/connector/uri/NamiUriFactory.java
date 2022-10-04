@@ -2,6 +2,7 @@ package nami.connector.uri;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import nami.connector.NamiServer;
 import nami.connector.namitypes.NamiSearchedValues;
 
@@ -9,7 +10,8 @@ import java.net.URI;
 
 public class NamiUriFactory {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 
     // URL, die zum Login in NaMi verwendet wird.
     static final String URL_NAMI_STARTUP = "/rest/nami/auth/manual/sessionStartup";

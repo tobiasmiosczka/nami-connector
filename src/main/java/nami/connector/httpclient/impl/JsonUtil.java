@@ -20,8 +20,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -54,7 +52,7 @@ public class JsonUtil {
         return deserializer(s -> {
             T result = map.get(s);
             if (result == null) {
-                throw new IllegalArgumentException("Unexpected String for " + tClass.getName() + ": " + s);
+                throw new IllegalArgumentException("Unexpected String for " + tClass.getName() + ": null");
             }
             return result;
         }, tClass);
@@ -63,7 +61,7 @@ public class JsonUtil {
     private static <T> JsonDeserializer<T> deserializer(Function<String, T> function, Class<T> tClass) {
         return new StdDeserializer<>(tClass) {
             @Override
-            public T deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            public T deserialize(JsonParser p, DeserializationContext c) throws IOException {
                 return function.apply(p.getValueAsString());
             }
         };
@@ -72,22 +70,13 @@ public class JsonUtil {
     private static LocalDateTime toLocalDateTime(String s) {
         if (s == null || s.isEmpty())
             return null;
-        return tryGetOrNull(() -> LocalDateTime.from(DATE_TIME_FORMATTER.parse(s)));
+        return  LocalDateTime.from(DATE_TIME_FORMATTER.parse(s));
     }
 
     private static LocalDate toLocalDate(String s) {
         if (s == null || s.isEmpty())
             return null;
-        return tryGetOrNull(() -> LocalDate.from(DATE_FORMATTER.parse(s)));
-    }
-
-    private static <T> T tryGetOrNull(Supplier<T> supplier) {
-        try {
-            return supplier.get();
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Could not deserialize. ", e);
-            return null;
-        }
+        return LocalDate.from(DATE_FORMATTER.parse(s));
     }
 
     public static ObjectMapper prepareObjectMapper() {

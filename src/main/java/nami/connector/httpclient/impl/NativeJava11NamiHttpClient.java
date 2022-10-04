@@ -1,7 +1,6 @@
 package nami.connector.httpclient.impl;
 
 import nami.connector.*;
-import nami.connector.exception.NamiApiException;
 import nami.connector.exception.NamiException;
 import nami.connector.exception.NamiLoginException;
 import nami.connector.httpclient.NamiHttpClient;
@@ -9,20 +8,25 @@ import nami.connector.namitypes.NamiLoginResponse;
 import nami.connector.namitypes.NamiResponse;
 import nami.connector.uri.NamiUriBuilder;
 
-import java.io.IOException;
 import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.logging.Logger;
 
 public class NativeJava11NamiHttpClient implements NamiHttpClient {
 
     private static final Logger LOGGER = Logger.getLogger(NamiConnector.class.getName());
 
-    private final CookieHandler cookieHandler = new CookieManager();
+    private final HttpClient httpClient;
+
+    public NativeJava11NamiHttpClient() {
+        this.httpClient = buildHttpClient();
+    }
 
     private static HttpRequest buildLoginRequest(final NamiServer server, final String username, final String password) {
         return new FormDataHttpRequestBuilder()
@@ -34,12 +38,17 @@ public class NativeJava11NamiHttpClient implements NamiHttpClient {
                 .build();
     }
 
-    private HttpClient getHttpClient() {
+    private static HttpClient buildHttpClient() {
+        CookieHandler cookieHandler = new CookieManager();
         return HttpClient
                 .newBuilder()
                 .cookieHandler(cookieHandler)
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
+    }
+
+    private static HttpRequest buildGetRequest(final URI uri) {
+        return HttpRequest.newBuilder().uri(uri).GET().build();
     }
 
     @Override
@@ -51,30 +60,33 @@ public class NativeJava11NamiHttpClient implements NamiHttpClient {
     }
 
     @Override
-    public <T> T getSingle(final URI uri, final Class<T> tClass) throws NamiException {
+    public <T> CompletableFuture<T> getSingle(final URI uri, final Class<T> tClass) {
         return sendNamiApiRequest(uri, NamiResponseBodyHandler.singleHandler(tClass));
     }
 
     @Override
-    public <T> List<T> getList(final URI uri, final Class<T> tClass) throws NamiException {
+    public <T> CompletableFuture<List<T>> getList(final URI uri, final Class<T> tClass) {
         return sendNamiApiRequest(uri, NamiResponseBodyHandler.listHandler(tClass));
     }
 
-    private <T> T sendNamiApiRequest(URI uri, JacksonBodyHandler<NamiResponse<T>> responseBodyHandler) throws NamiException {
-        try {
-            HttpResponse<NamiResponse<T>> response = getHttpClient().send(buildGetRequest(uri), responseBodyHandler);
-            validateApiResponse(response);
-            return response.body().getData();
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-            throw new NamiApiException(responseBodyHandler.getType(), uri, e.getMessage());
-        }
+    private <T> CompletableFuture<T> sendNamiApiRequest(URI uri, JacksonBodyHandler<NamiResponse<T>> responseBodyHandler) {
+        return httpClient
+                .sendAsync(buildGetRequest(uri), responseBodyHandler)
+                .thenApply(e -> {
+                    try {
+                        validateApiResponse(e);
+                    } catch (NamiException ex) {
+                        throw new CompletionException(ex);
+                    }
+                    return e;
+                })
+                .thenApply(r -> r.body().getData());
     }
 
     private HttpResponse<NamiLoginResponse> loginRequest(final HttpRequest request) throws NamiLoginException {
         LOGGER.fine("Sending request to NaMi-Server: " + request.uri());
         try {
-            return getHttpClient().send(request, NamiResponseBodyHandler.loginHandler());
+            return httpClient.send(request, NamiResponseBodyHandler.loginHandler());
         } catch (Exception e) {
             e.printStackTrace();
             throw new NamiLoginException(e);
@@ -99,9 +111,5 @@ public class NativeJava11NamiHttpClient implements NamiHttpClient {
         if (!response.body().isSuccess()) {
             throw new NamiException(response.body().getMessage());
         }
-    }
-
-    private static HttpRequest buildGetRequest(final URI uri) {
-        return HttpRequest.newBuilder().uri(uri).GET().build();
     }
 }
