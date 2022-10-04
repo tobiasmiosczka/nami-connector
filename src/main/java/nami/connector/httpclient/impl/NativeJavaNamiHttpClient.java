@@ -1,11 +1,11 @@
 package nami.connector.httpclient.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import nami.connector.*;
 import nami.connector.exception.NamiApiException;
 import nami.connector.exception.NamiException;
 import nami.connector.exception.NamiLoginException;
 import nami.connector.httpclient.NamiHttpClient;
+import nami.connector.namitypes.NamiLoginResponse;
 import nami.connector.namitypes.NamiResponse;
 import nami.connector.uri.NamiUriBuilder;
 
@@ -18,15 +18,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.logging.Logger;
 
-import static nami.connector.httpclient.impl.NamiResponseBodyHandler.listHandler;
-import static nami.connector.httpclient.impl.NamiResponseBodyHandler.singleHandler;
-
 public class NativeJavaNamiHttpClient implements NamiHttpClient {
 
     private static final Logger LOGGER = Logger.getLogger(NamiConnector.class.getName());
 
     private final CookieHandler cookieHandler = new CookieManager();
-    private final JsonUtil jsonUtil = new JsonUtil();
 
     private static HttpRequest buildLoginRequest(final NamiServer server, final String username, final String password) {
         return new FormDataHttpRequestBuilder()
@@ -42,53 +38,43 @@ public class NativeJavaNamiHttpClient implements NamiHttpClient {
         return HttpClient
                 .newBuilder()
                 .cookieHandler(cookieHandler)
+                .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
     }
 
     @Override
     public void login(final NamiServer server, final String username, final String password) throws NamiException {
-        HttpResponse<String> response1 = execute(buildLoginRequest(server, username, password));
-        if (response1.statusCode() != HttpURLConnection.HTTP_MOVED_TEMP) {
-            NamiResponse<Object> namiResponse = jsonUtil.fromJson(response1.body(), new TypeReference<NamiResponse<Object>>() {}.getType());
-            throw new NamiLoginException(namiResponse.getMessage());
-        }
-        String redirectUrl = response1.headers().map().get("Location").get(0);
-        if (redirectUrl == null) {
-            throw new NamiLoginException("No redirect location.");
-        }
-        HttpResponse<String>response2 = execute(HttpRequest.newBuilder().uri(URI.create(redirectUrl)).GET().build());
-        LOGGER.info("Got redirect to: " + redirectUrl);
-        if (response2.statusCode() != HttpURLConnection.HTTP_OK)
-            throw new NamiLoginException("Login failed.");
+        HttpResponse<NamiLoginResponse> response = loginRequest(buildLoginRequest(server, username, password));
+        if (response.statusCode() != HttpURLConnection.HTTP_OK)
+            throw new NamiLoginException("Status code is " + response.statusCode() + ".");
         LOGGER.info("Authenticated to NaMi-Server with API.");
     }
 
     @Override
     public <T> T getSingle(final URI uri, final Class<T> tClass) throws NamiException {
-        try {
-            HttpResponse<NamiResponse<T>> response = getHttpClient().send(buildGetRequest(uri), singleHandler(tClass));
-            validateResponse(response);
-            return response.body().getData();
-        } catch (IOException | InterruptedException e) {
-            throw new NamiApiException(tClass, uri, e.getMessage());
-        }
+        return sendNamiApiRequest(uri, NamiResponseBodyHandler.singleHandler(tClass));
     }
 
     @Override
     public <T> List<T> getList(final URI uri, final Class<T> tClass) throws NamiException {
+        return sendNamiApiRequest(uri, NamiResponseBodyHandler.listHandler(tClass));
+    }
+
+    private <T> T sendNamiApiRequest(URI uri, JacksonBodyHandler<NamiResponse<T>> responseBodyHandler) throws NamiException {
         try {
-            HttpResponse<NamiResponse<List<T>>> response = getHttpClient().send(buildGetRequest(uri), listHandler(tClass));
+            HttpResponse<NamiResponse<T>> response = getHttpClient().send(buildGetRequest(uri), responseBodyHandler);
             validateResponse(response);
             return response.body().getData();
         } catch (IOException | InterruptedException e) {
-            throw new NamiApiException(tClass, uri, e.getMessage());
+            e.printStackTrace();
+            throw new NamiApiException(responseBodyHandler.getType(), uri, e.getMessage());
         }
     }
 
-    private HttpResponse<String> execute(final HttpRequest request) throws NamiLoginException {
+    private HttpResponse<NamiLoginResponse> loginRequest(final HttpRequest request) throws NamiLoginException {
         LOGGER.fine("Sending request to NaMi-Server: " + request.uri());
         try {
-            return getHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            return getHttpClient().send(request, NamiResponseBodyHandler.loginHandler());
         } catch (Exception e) {
             e.printStackTrace();
             throw new NamiLoginException(e);

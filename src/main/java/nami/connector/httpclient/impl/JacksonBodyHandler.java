@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.lang.reflect.Type;
 import java.net.http.HttpResponse;
 
 public class JacksonBodyHandler<T> implements HttpResponse.BodyHandler<T> {
@@ -23,12 +24,15 @@ public class JacksonBodyHandler<T> implements HttpResponse.BodyHandler<T> {
         return HttpResponse.BodySubscribers.mapping(HttpResponse.BodySubscribers.ofInputStream(), this::toType);
     }
 
-    public T toType(InputStream inputStream) {
+    public Type getType() {
+        return typeReference;
+    }
+
+    private T toType(InputStream inputStream) {
         try (InputStream stream = inputStream) {
             return objectMapper.readValue(stream, typeReference);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
-
 }

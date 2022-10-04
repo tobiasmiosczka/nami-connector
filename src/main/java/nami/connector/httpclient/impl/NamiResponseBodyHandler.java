@@ -2,6 +2,7 @@ package nami.connector.httpclient.impl;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import nami.connector.namitypes.NamiLoginResponse;
 import nami.connector.namitypes.NamiResponse;
 
 import java.util.ArrayList;
@@ -33,4 +34,8 @@ public class NamiResponseBodyHandler<T> extends JacksonBodyHandler<T> {
         return new NamiResponseBodyHandler<>(type);
     }
 
+    public static JacksonBodyHandler<NamiLoginResponse> loginHandler() {
+        JavaType type = FACTORY.constructType(NamiLoginResponse.class);
+        return new NamiResponseBodyHandler<>(type);
+    }
 }
