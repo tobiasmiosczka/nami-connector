@@ -1,12 +1,15 @@
 package nami.connector.uri;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import nami.connector.NamiServer;
-import nami.connector.json.JsonUtil;
 import nami.connector.namitypes.NamiSearchedValues;
 
 import java.net.URI;
 
 public class NamiUriFactory {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     // URL, die zum Login in NaMi verwendet wird.
     static final String URL_NAMI_STARTUP = "/rest/nami/auth/manual/sessionStartup";
@@ -46,12 +49,17 @@ public class NamiUriFactory {
     }
 
     public URI namiSearch(int limit, int page, int start, NamiSearchedValues searchedValues) {
-        return getURIBuilder(URL_NAMI_SEARCH)
-                .setParameter("limit", limit)
-                .setParameter("page", page)
-                .setParameter("start", start)
-                .setParameter("searchedValues", JsonUtil.toJson(searchedValues))
-                .build();
+        try {
+            return getURIBuilder(URL_NAMI_SEARCH)
+                    .setParameter("limit", limit)
+                    .setParameter("page", page)
+                    .setParameter("start", start)
+                    .setParameter("searchedValues", OBJECT_MAPPER.writeValueAsString(searchedValues))
+                    .build();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null; //TODO: exception Handling
+        }
     }
 
     public URI namiMitglieder(int id) {

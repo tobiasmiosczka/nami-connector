@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 public class NamiUtil {
 
+    //TODO: fix
     public static Map<NamiBaustein, NamiSchulung> reduceToLatest(final Collection<NamiSchulung> trainings) {
         return trainings.stream().collect(Collectors.toMap(NamiSchulung::getBaustein, Function.identity()));
     }

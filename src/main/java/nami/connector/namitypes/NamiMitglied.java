@@ -170,10 +170,6 @@ public class NamiMitglied {
         return ort;
     }
 
-    public String getPLZ() {
-        return plz;
-    }
-
     public LocalDateTime getGeburtsDatum() {
         return geburtsDatum;
     }
