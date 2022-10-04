@@ -1,12 +1,10 @@
 package nami.connector.httpclient.impl;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import nami.connector.namitypes.NamiBaustein;
 import nami.connector.namitypes.NamiBeitragsart;
 import nami.connector.namitypes.NamiEbene;
@@ -16,7 +14,6 @@ import nami.connector.namitypes.NamiMitgliedstyp;
 import nami.connector.namitypes.NamiStufe;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -47,26 +44,6 @@ public class JsonUtil {
             .addDeserializer(NamiMitgliedStatus.class, deserializer(NamiMitgliedStatus.class))
             .addDeserializer(NamiMitgliedstyp.class, deserializer(NamiMitgliedstyp.class))
             .addDeserializer(NamiStufe.class, deserializer(NamiStufe.class));
-
-    private final ObjectMapper objectMapper = prepareObjectMapper();
-
-    public String toJson(Object o) {
-        try {
-            return this.objectMapper.writeValueAsString(o);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public <T> T fromJson(String json, Type type) {
-        try {
-            return objectMapper.readValue(json, TypeFactory.defaultInstance().constructType(type));
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 
     private static <E extends Enum<E>> JsonDeserializer<E> deserializer(Class<E> eEnum) {
         Map<String, E> map = Arrays.stream(eEnum.getEnumConstants())

@@ -1,5 +1,7 @@
 package nami.connector.json;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import nami.connector.httpclient.impl.JsonUtil;
 import nami.connector.namitypes.NamiStufe;
 import org.junit.jupiter.api.RepeatedTest;
@@ -18,15 +20,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class JsonUtilTest {
 
-    private final JsonUtil jsonUtil = new JsonUtil();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    public void testFromJsonWithValidDateTimeShouldReturnDate() {
+    public void testFromJsonWithValidDateTimeShouldReturnDate() throws Exception {
         //arrange
         String json = "\"1993-10-19 12:34:56\"";
 
         //act
-        LocalDateTime result = jsonUtil.fromJson(json, LocalDateTime.class);
+        LocalDateTime result = objectMapper.readValue(json, LocalDateTime.class);
 
         //assert
         assertNotNull(result);
@@ -39,12 +41,12 @@ class JsonUtilTest {
     }
 
     @Test
-    public void testFromJsonWithValidDateShouldReturnDate() {
+    public void testFromJsonWithValidDateShouldReturnDate() throws Exception {
         //arrange
         String json = "\"19.10.1993\"";
 
         //act
-        LocalDate result = jsonUtil.fromJson(json, LocalDate.class);
+        LocalDate result = objectMapper.readValue(json, LocalDate.class);
 
         //assert
         assertNotNull(result);
@@ -53,12 +55,12 @@ class JsonUtilTest {
         assertEquals(19, result.getDayOfMonth());
     }
 
-    @Test void testFromJsonWithValidAgeGroupShouldReturnAgeGroup() {
+    @Test void testFromJsonWithValidAgeGroupShouldReturnAgeGroup() throws Exception {
         //arrange
         String json = "\"Jungpfadfinder\"";
 
         //act
-        NamiStufe result = jsonUtil.fromJson(json, NamiStufe.class);
+        NamiStufe result = objectMapper.readValue(json, NamiStufe.class);
 
         //assert
         assertEquals(NamiStufe.JUNGPFADFINDER, result);
@@ -71,7 +73,7 @@ class JsonUtilTest {
         String json = "\"19.10.1993\"";
         ExecutorService service = Executors.newFixedThreadPool(10);
         List<Callable<LocalDate>> callables = IntStream.range(0, 1000)
-                .mapToObj(i -> (Callable<LocalDate>) () -> jsonUtil.fromJson(json, LocalDate.class))
+                .mapToObj(i -> (Callable<LocalDate>) () -> objectMapper.readValue(json, LocalDate.class))
                 .collect(Collectors.toList());
 
         //act
