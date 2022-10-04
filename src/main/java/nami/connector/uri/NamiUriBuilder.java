@@ -8,10 +8,7 @@ public class NamiUriBuilder extends UriBuilder {
 
     public NamiUriBuilder(NamiServer server, String path, boolean restUrl) {
         super();
-        if (server.getUseSsl())
-            setScheme("https");
-        else
-            setScheme("http");
+        setScheme(server.getUseSsl() ? "https" : "http");
         setHost(server.getNamiServer());
         setPath("/" + server.getNamiDeploy());
         if (restUrl)
