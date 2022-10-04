@@ -4,7 +4,7 @@ import java.util.*;
 
 import nami.connector.exception.NamiException;
 import nami.connector.httpclient.NamiHttpClient;
-import nami.connector.httpclient.impl.NativeJavaNamiHttpClient;
+import nami.connector.httpclient.impl.NativeJava11NamiHttpClient;
 import nami.connector.namitypes.NamiBaustein;
 import nami.connector.namitypes.NamiEbene;
 import nami.connector.namitypes.NamiEnum;
@@ -27,7 +27,7 @@ public class NamiConnector {
 
     public NamiConnector(NamiServer server) {
         this.server = server;
-        this.httpClient = new NativeJavaNamiHttpClient();
+        this.httpClient = new NativeJava11NamiHttpClient();
         this.uriFactory = new NamiUriFactory(server);
     }
 

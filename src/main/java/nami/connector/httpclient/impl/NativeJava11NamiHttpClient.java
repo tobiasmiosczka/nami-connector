@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class NativeJavaNamiHttpClient implements NamiHttpClient {
+public class NativeJava11NamiHttpClient implements NamiHttpClient {
 
     private static final Logger LOGGER = Logger.getLogger(NamiConnector.class.getName());
 
@@ -63,7 +63,7 @@ public class NativeJavaNamiHttpClient implements NamiHttpClient {
     private <T> T sendNamiApiRequest(URI uri, JacksonBodyHandler<NamiResponse<T>> responseBodyHandler) throws NamiException {
         try {
             HttpResponse<NamiResponse<T>> response = getHttpClient().send(buildGetRequest(uri), responseBodyHandler);
-            validateResponse(response);
+            validateApiResponse(response);
             return response.body().getData();
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
@@ -81,7 +81,7 @@ public class NativeJavaNamiHttpClient implements NamiHttpClient {
         }
     }
 
-    private static <T> void validateResponse(final HttpResponse<NamiResponse<T>> response) throws NamiException {
+    private static <T> void validateApiResponse(final HttpResponse<NamiResponse<T>> response) throws NamiException {
         if (response.statusCode() != HttpURLConnection.HTTP_OK) {
             String redirectTarget = response.headers().firstValue("Location")
                     .orElseThrow(() -> new NamiException("Status code of response is not 200 OK."));
