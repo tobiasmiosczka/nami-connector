@@ -25,7 +25,11 @@ public class NativeJava11NamiHttpClient implements NamiHttpClient {
     private final HttpClient httpClient;
 
     public NativeJava11NamiHttpClient() {
-        this.httpClient = buildHttpClient();
+        this.httpClient = HttpClient
+                .newBuilder()
+                .cookieHandler(new CookieManager())
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .build();
     }
 
     private static HttpRequest buildLoginRequest(final NamiServer server, final String username, final String password) {
@@ -35,15 +39,6 @@ public class NativeJava11NamiHttpClient implements NamiHttpClient {
                 .withValue("password", password)
                 .withValue("redirectTo", "app.jsp")
                 .withValue("Login", "API")
-                .build();
-    }
-
-    private static HttpClient buildHttpClient() {
-        CookieHandler cookieHandler = new CookieManager();
-        return HttpClient
-                .newBuilder()
-                .cookieHandler(cookieHandler)
-                .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
     }
 
