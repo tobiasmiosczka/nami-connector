@@ -80,15 +80,15 @@ public class NamiConnector {
         return getRootGruppierungWithoutChildren().thenCompose(this::addChildGruppierungen);
     }
 
-    public CompletableFuture<List<NamiGruppierung>> getGruppierungenFromUser() {
-        return getGruppierungenFromUser(-1);
+    public CompletableFuture<List<NamiGruppierung>> getAccessibleGroups() {
+        return getAccessibleGroupsRecursively(-1);
     }
 
-    private CompletableFuture<List<NamiGruppierung>> getGruppierungenFromUser(int id) {
-        return httpClient.getList(uriFactory.groupsByUser(id), NamiGruppierung.class)
-                .thenCompose(list -> sequence(list.stream().map(e -> getGruppierungenFromUser(e.getId())).toList())
-                .thenApply(lists -> lists.stream().flatMap(Collection::stream).toList())
-                .thenApply(l -> Stream.concat(list.stream(), l.stream()).toList()));
+    private CompletableFuture<List<NamiGruppierung>> getAccessibleGroupsRecursively(int groupId) {
+        return httpClient.getList(uriFactory.groupsByUser(groupId), NamiGruppierung.class)
+                .thenCompose(list -> sequence(list.stream().map(e -> getAccessibleGroupsRecursively(e.getId())).toList())
+                        .thenApply(lists -> lists.stream().flatMap(Collection::stream).toList())
+                        .thenApply(l -> Stream.concat(list.stream(), l.stream()).toList()));
     }
 
     public CompletableFuture<Optional<NamiGruppierung>> getGruppierung(int groupNumber) {
@@ -113,7 +113,7 @@ public class NamiConnector {
         return httpClient.getList(uriFactory.namiSearch(limit, page, start, searchedValues), NamiMitglied.class);
     }
 
-    static<T> CompletableFuture<List<T>> sequence(List<CompletableFuture<T>> com) {
+    static <T> CompletableFuture<List<T>> sequence(List<CompletableFuture<T>> com) {
         return CompletableFuture.allOf(com.toArray(new CompletableFuture[com.size()]))
                 .thenApply(v -> com.stream()
                         .map(CompletableFuture::join)
