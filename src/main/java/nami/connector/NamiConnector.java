@@ -2,6 +2,7 @@ package nami.connector;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 import nami.connector.exception.NamiException;
 import nami.connector.httpclient.NamiHttpClient;
@@ -84,16 +85,10 @@ public class NamiConnector {
     }
 
     private CompletableFuture<List<NamiGruppierung>> getGruppierungenFromUser(int id) {
-        CompletableFuture<List<NamiGruppierung>> result = httpClient.getList(uriFactory.groupsByUser(id), NamiGruppierung.class);
-
-        return result.thenCompose(list -> sequence(list.stream().map(e -> getGruppierungenFromUser(e.getId())).toList())
+        return httpClient.getList(uriFactory.groupsByUser(id), NamiGruppierung.class)
+                .thenCompose(list -> sequence(list.stream().map(e -> getGruppierungenFromUser(e.getId())).toList())
                 .thenApply(lists -> lists.stream().flatMap(Collection::stream).toList())
-                .thenApply(l -> {
-                    List<NamiGruppierung> resultList = new ArrayList<>();
-                    resultList.addAll(l);
-                    resultList.addAll(list);
-                    return resultList;
-                }));
+                .thenApply(l -> Stream.concat(list.stream(), l.stream()).toList()));
     }
 
     public CompletableFuture<Optional<NamiGruppierung>> getGruppierung(int groupNumber) {
