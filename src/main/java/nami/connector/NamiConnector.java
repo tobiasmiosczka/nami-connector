@@ -2,7 +2,6 @@ package nami.connector;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Stream;
 
 import nami.connector.exception.NamiException;
 import nami.connector.httpclient.NamiHttpClient;
@@ -11,6 +10,8 @@ import nami.connector.namitypes.*;
 import nami.connector.uri.NamiUriFactory;
 
 import static java.util.stream.Collectors.toList;
+import static nami.connector.CollectionUtil.merge;
+import static nami.connector.CollectionUtil.sequence;
 
 public class NamiConnector {
 
@@ -87,8 +88,8 @@ public class NamiConnector {
     private CompletableFuture<List<NamiGruppierung>> getAccessibleGroupsRecursively(int groupId) {
         return httpClient.getList(uriFactory.groupsByUser(groupId), NamiGruppierung.class)
                 .thenCompose(list -> sequence(list.stream().map(e -> getAccessibleGroupsRecursively(e.getId())).toList())
-                        .thenApply(lists -> lists.stream().flatMap(Collection::stream).toList())
-                        .thenApply(l -> Stream.concat(list.stream(), l.stream()).toList()));
+                        .thenApply(CollectionUtil::flatMap)
+                        .thenApply(l -> merge(list, l)));
     }
 
     public CompletableFuture<Optional<NamiGruppierung>> getGruppierung(int groupNumber) {
@@ -111,12 +112,5 @@ public class NamiConnector {
 
     private CompletableFuture<List<NamiMitglied>> getSearchResult(NamiSearchedValues searchedValues, int limit, int page, int start) {
         return httpClient.getList(uriFactory.namiSearch(limit, page, start, searchedValues), NamiMitglied.class);
-    }
-
-    static <T> CompletableFuture<List<T>> sequence(List<CompletableFuture<T>> com) {
-        return CompletableFuture.allOf(com.toArray(new CompletableFuture[com.size()]))
-                .thenApply(v -> com.stream()
-                        .map(CompletableFuture::join)
-                        .collect(toList()));
     }
 }
