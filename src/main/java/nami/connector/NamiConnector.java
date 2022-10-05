@@ -61,7 +61,7 @@ public class NamiConnector {
         return httpClient.getList(uriFactory.namiTaetigkeiten(id), NamiTaetigkeitAssignment.class);
     }
 
-    public CompletableFuture<NamiGruppierung> addChildGruppierungen(NamiGruppierung group) {
+    private CompletableFuture<NamiGruppierung> addChildGruppierungen(NamiGruppierung group) {
         if (group.getEbene() == NamiEbene.STAMM) {
             group.setChildren(new LinkedList<>());
             return CompletableFuture.completedFuture(group);
