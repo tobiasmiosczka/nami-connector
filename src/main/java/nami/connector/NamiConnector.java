@@ -1,21 +1,14 @@
 package nami.connector;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import nami.connector.exception.NamiException;
 import nami.connector.httpclient.NamiHttpClient;
 import nami.connector.httpclient.impl.NativeJava11NamiHttpClient;
-import nami.connector.namitypes.NamiBaustein;
-import nami.connector.namitypes.NamiEbene;
-import nami.connector.namitypes.NamiEnum;
-import nami.connector.namitypes.NamiGruppierung;
-import nami.connector.namitypes.NamiMitglied;
-import nami.connector.namitypes.NamiSchulung;
-import nami.connector.namitypes.NamiSearchedValues;
-import nami.connector.namitypes.NamiTaetigkeitAssignment;
+import nami.connector.namitypes.*;
 import nami.connector.uri.NamiUriFactory;
-
-import static nami.connector.NamiUtil.reduceToLatest;
 
 public class NamiConnector {
 
@@ -35,84 +28,91 @@ public class NamiConnector {
         httpClient.login(server, username, password);
     }
 
-    public Collection<NamiMitglied> getAllResults(NamiSearchedValues searchedValues) throws NamiException {
+    public CompletableFuture<List<NamiMitglied>> getAllResults(NamiSearchedValues searchedValues) {
         return getSearchResult(searchedValues, INITIAL_LIMIT, 1, 0);
     }
 
-    public NamiMitglied getMitgliedById(int id) throws NamiException {
+    public CompletableFuture<NamiMitglied> getMitgliedById(int id) {
         return this.httpClient.getSingle(uriFactory.namiMitglieder(id), NamiMitglied.class);
     }
 
-    public Collection<NamiSchulung> getTrainingsByUser(int userId) throws NamiException {
+    public CompletableFuture<List<NamiSchulung>> getTrainingsByUser(int userId) {
         return httpClient.getList(uriFactory.namiSchulungen(userId), NamiSchulung.class);
     }
 
-    public Map<NamiBaustein, NamiSchulung> getLatestTrainingsByUser(int userId) throws NamiException {
-        Collection<NamiSchulung> result = getTrainingsByUser(userId);
-        return reduceToLatest(result);
+    public CompletableFuture<Map<NamiBaustein, NamiSchulung>> getLatestTrainingsByUser(int userId) {
+        return getTrainingsByUser(userId)
+                .thenApply(NamiUtil::reduceToLatest);
     }
 
-    public List<NamiEnum> getTaetigkeiten() throws NamiException {
+    public CompletableFuture<List<NamiEnum>> getTaetigkeiten() {
         return httpClient.getList(uriFactory.namiTaetigkeiten(), NamiEnum.class);
     }
 
-    public List<NamiEnum> getUntergliederungen() throws NamiException {
+    public CompletableFuture<List<NamiEnum>> getUntergliederungen() {
         return httpClient.getList(uriFactory.namiUntergliederungen(), NamiEnum.class);
     }
 
-    public Collection<NamiMitglied> getMitgliederFromGruppierung(int gruppierungsnummer) throws NamiException {
+    public CompletableFuture<List<NamiMitglied>> getMitgliederFromGruppierung(int gruppierungsnummer) {
         return httpClient.getList(uriFactory.memberFromGroup(gruppierungsnummer), NamiMitglied.class);
     }
 
-    public Collection<NamiTaetigkeitAssignment> getTaetigkeiten(int id) throws NamiException {
+    public CompletableFuture<List<NamiTaetigkeitAssignment>> getTaetigkeiten(int id) {
         return httpClient.getList(uriFactory.namiTaetigkeiten(id), NamiTaetigkeitAssignment.class);
     }
 
-    public Collection<NamiGruppierung> getChildGruppierungen(int rootGruppierung) throws NamiException {
-        List<NamiGruppierung> allChildren = httpClient.getList(uriFactory.childGroups(rootGruppierung), NamiGruppierung.class);
-        Collection<NamiGruppierung> activeChildren = new LinkedList<>();
-        for (NamiGruppierung child : allChildren) {
-            activeChildren.add(child);
-            child.setChildren(child.getEbene() == NamiEbene.STAMM ? new LinkedList<>() : getChildGruppierungen(child.getId()));
+    private CompletableFuture<NamiGruppierung> addChildGruppierungen(NamiGruppierung group) {
+        if (group.getEbene() == NamiEbene.STAMM) {
+            group.setChildren(new LinkedList<>());
+            return CompletableFuture.completedFuture(group);
         }
-        return activeChildren;
+        return httpClient.getList(uriFactory.childGroups(group.getId()), NamiGruppierung.class)
+                .thenCompose(children -> allOf(children.stream().map(this::addChildGruppierungen).collect(Collectors.toList())))
+                .thenApply(cc -> {
+                    group.setChildren(cc);
+                    return group;
+                });
     }
 
-    public NamiGruppierung getRootGruppierung() throws NamiException {
-        NamiGruppierung rootGroup = getRootGruppierungWithoutChildren();
-        rootGroup.setChildren(getChildGruppierungen(rootGroup.getId()));
-        return rootGroup;
+    public CompletableFuture<NamiGruppierung> getRootGruppierung() {
+        return getRootGruppierungWithoutChildren().thenCompose(this::addChildGruppierungen);
     }
 
-    public Collection<NamiGruppierung> getGruppierungenFromUser() throws NamiException {
+    public CompletableFuture<List<NamiGruppierung>> getGruppierungenFromUser() {
         return getGruppierungenFromUser(-1);
     }
 
-    public Collection<NamiGruppierung> getGruppierungenFromUser(int id) throws NamiException {
-        List<NamiGruppierung> results = httpClient.getList(uriFactory.groupsByUser(id), NamiGruppierung.class);
-        Collection<NamiGruppierung> newResults = new LinkedList<>();
-        for (NamiGruppierung namiGruppierung : results)
-            newResults.addAll(getGruppierungenFromUser(namiGruppierung.getId()));
-        results.addAll(newResults);
-        return results;
+    public CompletableFuture<List<NamiGruppierung>> getGruppierungenFromUser(int id) {
+        return httpClient.getList(uriFactory.groupsByUser(id), NamiGruppierung.class)
+                .thenCompose(list -> allOf(list.stream().map(e -> getGruppierungenFromUser(e.getId())).toList())
+                        .thenApply(lists -> lists.stream().flatMap(Collection::stream).toList()));
     }
 
-    public Optional<NamiGruppierung> getGruppierung(int groupNumber) throws NamiException {
-        return getRootGruppierung().findGruppierung(groupNumber);
+    public CompletableFuture<Optional<NamiGruppierung>> getGruppierung(int groupNumber) throws NamiException {
+        return getRootGruppierung()
+                .thenApply(e -> e.findGruppierung(groupNumber));
     }
 
-    public NamiTaetigkeitAssignment getTaetigkeit(int personId, int taetigkeitId) throws NamiException {
+    public CompletableFuture<NamiTaetigkeitAssignment> getTaetigkeit(int personId, int taetigkeitId) {
         return httpClient.getSingle(uriFactory.taetigkeitByPersonIdAndTeatigkeitId(personId, taetigkeitId), NamiTaetigkeitAssignment.class);
     }
 
-    private NamiGruppierung getRootGruppierungWithoutChildren() throws NamiException {
-        List<NamiGruppierung> response = httpClient.getList(uriFactory.rootGroupWithoutChildren(), NamiGruppierung.class);
-        NamiGruppierung rootGrp = response.iterator().next();
-        rootGrp.setChildren(null);
-        return rootGrp;
+    private CompletableFuture<NamiGruppierung> getRootGruppierungWithoutChildren() {
+        return httpClient.getList(uriFactory.rootGroupWithoutChildren(), NamiGruppierung.class)
+                .thenApply(e -> {
+                    NamiGruppierung rootGrp = e.get(0);
+                    rootGrp.setChildren(null);
+                    return rootGrp;
+                });
     }
 
-    private Collection<NamiMitglied> getSearchResult(NamiSearchedValues searchedValues, int limit, int page, int start) throws NamiException {
+    private CompletableFuture<List<NamiMitglied>> getSearchResult(NamiSearchedValues searchedValues, int limit, int page, int start) {
         return httpClient.getList(uriFactory.namiSearch(limit, page, start, searchedValues), NamiMitglied.class);
+    }
+
+    public static <T> CompletableFuture<List<T>> allOf(List<CompletableFuture<T>> futuresList) {
+        return CompletableFuture
+                .allOf(futuresList.toArray(new CompletableFuture[0]))
+                .thenApply(v -> futuresList.stream().map(CompletableFuture::join).toList());
     }
 }
