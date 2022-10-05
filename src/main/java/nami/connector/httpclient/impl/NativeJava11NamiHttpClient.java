@@ -42,7 +42,7 @@ public class NativeJava11NamiHttpClient implements NamiHttpClient {
                 .build();
     }
 
-    private static HttpRequest buildGetRequest(final URI uri) {
+    private static HttpRequest get(final URI uri) {
         return HttpRequest.newBuilder().uri(uri).GET().build();
     }
 
@@ -66,7 +66,7 @@ public class NativeJava11NamiHttpClient implements NamiHttpClient {
 
     private <T> CompletableFuture<T> sendNamiApiRequest(URI uri, JacksonBodyHandler<NamiResponse<T>> responseBodyHandler) {
         return httpClient
-                .sendAsync(buildGetRequest(uri), responseBodyHandler)
+                .sendAsync(get(uri), responseBodyHandler)
                 .thenApply(e -> {
                     try {
                         validateApiResponse(e);
