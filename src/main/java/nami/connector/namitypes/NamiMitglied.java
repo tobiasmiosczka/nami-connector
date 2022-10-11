@@ -1,5 +1,7 @@
 package nami.connector.namitypes;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDateTime;
 
 /**
@@ -41,7 +43,9 @@ public class NamiMitglied {
     private String emailVertretungsberechtigter;
 
     private String mglTypeId; // ENUM?? z.B. NICHT_MITGLIED
-    private NamiMitgliedstyp mglType;
+
+    @JsonProperty("mglType")
+    private NamiMitgliedstyp mitgliedstyp;
 
     private String ersteTaetigkeitId;
     private String ersteTaetigkeit;
@@ -111,7 +115,7 @@ public class NamiMitglied {
     }
 
     public NamiMitgliedstyp getMitgliedstyp() {
-        return mglType;
+        return mitgliedstyp;
     }
 
     public NamiGeschlecht getGeschlecht() {

@@ -1,7 +1,9 @@
 package nami.connector.json;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import nami.connector.httpclient.impl.JsonUtil;
+import nami.connector.namitypes.NamiMitgliedstyp;
 import nami.connector.namitypes.NamiStufe;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,42 @@ import static org.junit.jupiter.api.Assertions.*;
 class JsonUtilTest {
 
     private final ObjectMapper objectMapper = JsonUtil.prepareObjectMapper();
+
+    @Test
+    public void testFromJsonWithValidNamiMitgliedstypMitgliedShouldReturnValidMitgliedsTypMitglied() throws Exception {
+        //arrange
+        String json = "\"Mitglied\"";
+
+        //act
+        NamiMitgliedstyp result = objectMapper.readValue(json, NamiMitgliedstyp.class);
+
+        //assert
+        assertEquals(NamiMitgliedstyp.MITGLIED, result);
+    }
+
+    @Test
+    public void testFromJsonWithValidNamiMitgliedstypNichtMitgliedShouldReturnValidMitgliedsTypNichtMitglied() throws Exception {
+        //arrange
+        String json = "\"Nicht-Mitglied\"";
+
+        //act
+        NamiMitgliedstyp result = objectMapper.readValue(json, NamiMitgliedstyp.class);
+
+        //assert
+        assertEquals(NamiMitgliedstyp.NICHT_MITGLIED, result);
+    }
+
+    @Test
+    public void testFromJsonWithValidNamiMitgliedstypSchnuppermitgliedShouldReturnValidMitgliedsTypSchnuppermitglied() throws Exception {
+        //arrange
+        String json = "\"Schnuppermitglied\"";
+
+        //act
+        NamiMitgliedstyp result = objectMapper.readValue(json, NamiMitgliedstyp.class);
+
+        //assert
+        assertEquals(NamiMitgliedstyp.SCHNUPPER_MITGLIED, result);
+    }
 
     @Test
     public void testFromJsonWithValidDateTimeShouldReturnDate() throws Exception {
@@ -78,7 +116,7 @@ class JsonUtilTest {
         //act
         List<LocalDate> localDates = service.invokeAll(callables).stream()
                 .map(JsonUtilTest::tryGet)
-                .collect(Collectors.toList());
+                .toList();
 
         //assert
         for (LocalDate result : localDates) {
