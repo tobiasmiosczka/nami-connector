@@ -16,21 +16,12 @@ public enum NamiGeschlecht {
     }
 
     public static NamiGeschlecht fromString(String str) {
-        switch (str) {
-            case "männlich":
-            case "MAENNLICH":
-                return MAENNLICH;
-            case "weiblich":
-            case "WEIBLICH":
-                return WEIBLICH;
-            case "keine Angabe":
-            case "Keine Angabe":
-            case "KEINE_ANGABE":
-                return KEINE_ANGABE;
-            case "":
-                return null;
-            default:
-                throw new IllegalArgumentException("Unexpected String for Geschlecht: " + str);
-        }
+        return switch (str) {
+            case "männlich", "MAENNLICH" -> MAENNLICH;
+            case "weiblich", "WEIBLICH" -> WEIBLICH;
+            case "keine Angabe", "Keine Angabe", "KEINE_ANGABE" -> KEINE_ANGABE;
+            case "" -> null;
+            default -> throw new IllegalArgumentException("Unexpected String for Geschlecht: " + str);
+        };
     }
 }
