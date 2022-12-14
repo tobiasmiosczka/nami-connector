@@ -3,11 +3,11 @@ package nami.connector.httpclient.impl;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
 
 public class JacksonBodyHandler<T> implements HttpResponse.BodyHandler<T> {
 
@@ -30,7 +30,11 @@ public class JacksonBodyHandler<T> implements HttpResponse.BodyHandler<T> {
 
     private T toType(InputStream inputStream) {
         try (InputStream stream = inputStream) {
-            return objectMapper.readValue(stream, typeReference);
+            String text = new BufferedReader(
+                    new InputStreamReader(stream, StandardCharsets.UTF_8))
+                    .lines()
+                    .collect(Collectors.joining("\n"));
+            return objectMapper.readValue(text, typeReference);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
