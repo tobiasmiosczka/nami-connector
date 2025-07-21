@@ -1,13 +1,24 @@
 package nami.connector;
 
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-
 import nami.connector.exception.NamiException;
 import nami.connector.httpclient.NamiHttpClient;
 import nami.connector.httpclient.impl.NativeJava11NamiHttpClient;
-import nami.connector.namitypes.*;
+import nami.connector.namitypes.NamiBaustein;
+import nami.connector.namitypes.NamiEbene;
+import nami.connector.namitypes.NamiEnum;
+import nami.connector.namitypes.NamiGruppierung;
+import nami.connector.namitypes.NamiMitglied;
+import nami.connector.namitypes.NamiSchulung;
+import nami.connector.namitypes.NamiSearchedValues;
+import nami.connector.namitypes.NamiTaetigkeitAssignment;
 import nami.connector.uri.NamiUriFactory;
+
+import java.net.URI;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import static java.util.stream.Collectors.toList;
 import static nami.connector.CollectionUtil.merge;
@@ -16,19 +27,17 @@ import static nami.connector.CollectionUtil.sequence;
 public class NamiConnector {
 
     private final NamiHttpClient httpClient;
-    private final NamiServer server;
     private final NamiUriFactory uriFactory;
 
     private static final int INITIAL_LIMIT = 1000;
 
-    public NamiConnector(NamiServer server) {
-        this.server = server;
+    public NamiConnector(URI baseUri) {
         this.httpClient = new NativeJava11NamiHttpClient();
-        this.uriFactory = new NamiUriFactory(server);
+        this.uriFactory = new NamiUriFactory(baseUri);
     }
 
     public void login(String username, String password) throws NamiException {
-        httpClient.login(server, username, password);
+        httpClient.login(uriFactory.login(), username, password);
     }
 
     public CompletableFuture<List<NamiMitglied>> getAllResults(NamiSearchedValues searchedValues) {

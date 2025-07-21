@@ -1,14 +1,16 @@
 package nami.connector.httpclient.impl;
 
-import nami.connector.*;
+import nami.connector.NamiConnector;
 import nami.connector.exception.NamiException;
 import nami.connector.exception.NamiLoginException;
 import nami.connector.httpclient.NamiHttpClient;
 import nami.connector.namitypes.NamiLoginResponse;
 import nami.connector.namitypes.NamiResponse;
-import nami.connector.uri.NamiUriBuilder;
 
-import java.net.*;
+import java.net.CookieManager;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URLDecoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -28,13 +30,13 @@ public class NativeJava11NamiHttpClient implements NamiHttpClient {
         this.httpClient = HttpClient
                 .newBuilder()
                 .cookieHandler(new CookieManager())
-                .followRedirects(HttpClient.Redirect.NORMAL)
+                .followRedirects(HttpClient.Redirect.ALWAYS)
                 .build();
     }
 
-    private static HttpRequest buildLoginRequest(final NamiServer server, final String username, final String password) {
+    private static HttpRequest buildLoginRequest(final URI uri, final String username, final String password) {
         return new FormDataHttpRequestBuilder()
-                .uri(NamiUriBuilder.getLoginURIBuilder(server).build())
+                .uri(uri)
                 .withValue("username", username)
                 .withValue("password", password)
                 .withValue("redirectTo", "app.jsp")
@@ -47,8 +49,8 @@ public class NativeJava11NamiHttpClient implements NamiHttpClient {
     }
 
     @Override
-    public void login(final NamiServer server, final String username, final String password) throws NamiException {
-        HttpResponse<NamiLoginResponse> response = loginRequest(buildLoginRequest(server, username, password));
+    public void login(final URI uri, final String username, final String password) throws NamiException {
+        HttpResponse<NamiLoginResponse> response = loginRequest(buildLoginRequest(uri, username, password));
         if (response.statusCode() != HttpURLConnection.HTTP_OK)
             throw new NamiLoginException("Status code is " + response.statusCode() + ".");
         LOGGER.info("Authenticated to NaMi-Server with API.");

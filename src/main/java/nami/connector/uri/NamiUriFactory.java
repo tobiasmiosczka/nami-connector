@@ -3,7 +3,6 @@ package nami.connector.uri;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import nami.connector.NamiServer;
 import nami.connector.namitypes.NamiSearchedValues;
 
 import java.net.URI;
@@ -43,20 +42,28 @@ public class NamiUriFactory {
     private static final String URL_SCHULUNGEN = "/nami/mitglied-ausbildung/filtered-for-navigation/mitglied/mitglied";
 
     private static final int MAX_TAETIGKEITEN = 1000;
+    public static final String PARAMETER_LIMIT = "limit";
+    public static final String PARAMETER_PAGE = "page";
+    public static final String PARAMETER_START = "start";
+    public static final String PATH_FLIST = "flist";
+    public static final String PARAMETER_NODE = "node";
+    public static final String PARAMETER_SEARCHED_VALUES = "searchedValues";
+    public static final String PATH_ROOT = "root";
 
-    private final NamiServer namiServer;
+    private final UriBuilder template;
 
-    public NamiUriFactory(NamiServer namiServer) {
-        this.namiServer = namiServer;
+    public NamiUriFactory(URI baseUri) {
+        this.template = UriBuilder.fromUri(baseUri);
     }
 
     public URI namiSearch(int limit, int page, int start, NamiSearchedValues searchedValues) {
         try {
-            return getURIBuilder(URL_NAMI_SEARCH)
-                    .setParameter("limit", limit)
-                    .setParameter("page", page)
-                    .setParameter("start", start)
-                    .setParameter("searchedValues", OBJECT_MAPPER.writeValueAsString(searchedValues))
+            return rest()
+                    .appendPath(URL_NAMI_SEARCH)
+                    .withParameter(PARAMETER_LIMIT, limit)
+                    .withParameter(PARAMETER_PAGE, page)
+                    .withParameter(PARAMETER_START, start)
+                    .withParameter(PARAMETER_SEARCHED_VALUES, OBJECT_MAPPER.writeValueAsString(searchedValues))
                     .build();
         } catch (JsonProcessingException e) {
             e.printStackTrace();
@@ -65,78 +72,96 @@ public class NamiUriFactory {
     }
 
     public URI namiMitglieder(int id) {
-        return getURIBuilder(URL_NAMI_MITGLIEDER)
+        return rest()
+                .appendPath(URL_NAMI_MITGLIEDER)
                 .appendPath(0)
                 .appendPath(id)
                 .build();
     }
 
     public URI namiSchulungen(int userId) {
-        return getURIBuilder(URL_SCHULUNGEN)
+        return rest()
+                .appendPath(URL_SCHULUNGEN)
                 .appendPath(userId)
-                .appendPath("flist")
+                .appendPath(PATH_FLIST)
                 .build();
     }
 
     public URI namiTaetigkeiten() {
-        return getURIBuilder(URL_TAETIGKEITEN)
+        return rest()
+                .appendPath(URL_TAETIGKEITEN)
                 .build();
     }
 
     public URI namiUntergliederungen() {
-        return getURIBuilder(URL_UNTERGLIEDERUNGEN)
+        return rest()
+                .appendPath(URL_UNTERGLIEDERUNGEN)
                 .build();
     }
 
     public URI memberFromGroup(int gruppierungsnummer) {
-        return getURIBuilder(URL_NAMI_MITGLIEDER)
+        return rest()
+                .appendPath(URL_NAMI_MITGLIEDER)
                 .appendPath(gruppierungsnummer)
-                .appendPath("flist")
-                .setParameter("limit", 5000)
-                .setParameter("page", 1)
-                .setParameter("start", 0)
+                .appendPath(PATH_FLIST)
+                .withParameter(PARAMETER_LIMIT, 5000)
+                .withParameter(PARAMETER_PAGE, 1)
+                .withParameter(PARAMETER_START, 0)
                 .build();
     }
 
     public URI taetigkeitByPersonIdAndTeatigkeitId(int personId, int taetigkeitId) {
-        return getURIBuilder(URL_NAMI_TAETIGKEIT)
+        return rest()
+                .appendPath(URL_NAMI_TAETIGKEIT)
                 .appendPath(personId)
                 .appendPath(taetigkeitId)
                 .build();
     }
 
     public URI rootGroupWithoutChildren() {
-        return getURIBuilder(URL_GRUPPIERUNGEN)
-                .appendPath("root")
-                .setParameter("node", "root")
+        return rest()
+                .appendPath(URL_GRUPPIERUNGEN)
+                .appendPath(PATH_ROOT)
+                .withParameter(PARAMETER_NODE, PATH_ROOT)
                 .build();
     }
 
     public URI groupsByUser(int id) {
-        UriBuilder builder = getURIBuilder(URL_GRUPPIERUNGEN);
+        UriBuilder builder = rest()
+                .appendPath(URL_GRUPPIERUNGEN);
         if (id != -1)
             builder.appendPath(id);
         return builder.build();
     }
 
     public URI childGroups(int rootGruppierung) {
-        return getURIBuilder(URL_GRUPPIERUNGEN)
+        return rest()
+                .appendPath(URL_GRUPPIERUNGEN)
                 .appendPath(rootGruppierung)
-                .setParameter("node", rootGruppierung)
+                .withParameter(PARAMETER_NODE, rootGruppierung)
                 .build();
     }
 
     public URI namiTaetigkeiten(int id) {
-        return getURIBuilder(URL_NAMI_TAETIGKEIT)
+        return rest()
+                .appendPath(URL_NAMI_TAETIGKEIT)
                 .appendPath(id)
-                .appendPath("flist")
-                .setParameter("limit", MAX_TAETIGKEITEN)
-                .setParameter("page", 0)
-                .setParameter("start", 0)
+                .appendPath(PATH_FLIST)
+                .withParameter(PARAMETER_LIMIT, MAX_TAETIGKEITEN)
+                .withParameter(PARAMETER_PAGE, 0)
+                .withParameter(PARAMETER_START, 0)
                 .build();
     }
 
-    private UriBuilder getURIBuilder(String path) {
-        return new NamiUriBuilder(namiServer, path, true);
+    public URI login() {
+        return template.copy()
+                .appendPath(URL_NAMI_STARTUP)
+                .build();
     }
+
+    private UriBuilder rest() {
+        return template.copy()
+                .appendPath("rest/api/2/2/service");
+    }
+
 }
